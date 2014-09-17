@@ -1,7 +1,7 @@
 <?php
 
 	namespace b2db;
-	
+
 	/**
 	 * B2DB Core class
 	 *
@@ -41,15 +41,16 @@
 		protected static $_transaction_active = false;
 		protected static $_tables = array();
 		protected static $_debug_mode = true;
+                protected static $_cache_object = null;
 		protected static $_cache_dir;
 		protected static $_cached_entity_classes = array();
 		protected static $_cached_table_classes = array();
 
 		/**
 		 * Loads a table and adds it to the B2DBObject stack
-		 * 
+		 *
 		 * @param Table $tbl_name
-		 * 
+		 *
 		 * @return Table
 		 */
 		public static function loadNewTable(Table $table)
@@ -93,7 +94,7 @@
 		 *
 		 * @param boolean $load_parameters[optional] whether to load connection parameters
 		 */
-		public static function initialize($configuration = array())
+		public static function initialize($configuration = array(), $cache_object = null)
 		{
 			try
 			{
@@ -106,13 +107,13 @@
 				if (array_key_exists('database', $configuration) && $configuration['database']) self::setDBname($configuration['database']);
 				if (array_key_exists('tableprefix', $configuration) && $configuration['tableprefix']) self::setTablePrefix($configuration['tableprefix']);
 
-				if (class_exists('\\caspar\\core\\Caspar')) self::setDebugMode(\caspar\core\Caspar::isDebugMode());
+                                self::$_cache_object = $cache_object;
 			}
 			catch (\Exception $e)
 			{
 				throw $e;
 			}
-			
+
 		}
 
 		/**
@@ -172,12 +173,12 @@
 				throw $e;
 			}
 		}
-		
+
 		/**
 		 * Returns the Table object
 		 *
 		 * @param Table $tbl_name
-		 * 
+		 *
 		 * @return Table
 		 */
 		public static function getTable($tbl_name)
@@ -210,7 +211,7 @@
 					break;
 				}
 			}
-			
+
 			if (!$trace)
 				$trace = array('file' => 'unknown', 'line' => 'unknown');
 
@@ -227,12 +228,12 @@
 		{
 			return self::$_sqlhits;
 		}
-		
+
 		public static function getSQLCount()
 		{
 			return \count(self::$_sqlhits) +1;
 		}
-		
+
 		public static function getSQLTiming()
 		{
 			return self::$_sqltiming;
@@ -269,7 +270,7 @@
 			}
 			return $res;
 		}
-		
+
 		/**
 		 * Set the DSN
 		 *
@@ -374,8 +375,8 @@
 
 		/**
 		 * Set the database port
-		 * 
-		 * @param integer $port 
+		 *
+		 * @param integer $port
 		 */
 		public static function setPort($port)
 		{
@@ -574,7 +575,7 @@
 			}
 			return self::$_cache_dir;
 		}
-		
+
 		/**
 		 * Toggle the transaction state
 		 *
@@ -584,7 +585,7 @@
 		{
 			self::$_transaction_active = $state;
 		}
-		
+
 		/**
 		 * Starts a new transaction
 		 */
@@ -592,15 +593,15 @@
 		{
 			return new Transaction();
 		}
-		
+
 		public static function isTransactionActive()
 		{
 			return (bool) self::$_transaction_active == Transaction::STATE_STARTED;
 		}
-		
+
 		/**
 		 * Displays a nicely formatted exception message
-		 *  
+		 *
 		 * @param Exception $exception
 		 */
 		public static function fatalError(\Exception $exception)
@@ -670,7 +671,7 @@
 						else
 						{
 							echo '<span style="color: #C95;">unknown file</span>';
-						}	
+						}
 						echo '</li>';
 					}
 					echo "
@@ -719,7 +720,7 @@
 		public static function getDBtypes()
 		{
 			$retarr = array();
-			
+
 			if (\class_exists('\PDO'))
 			{
 				$retarr['mysql'] = 'MySQL';
@@ -738,7 +739,7 @@
 			{
 				throw new Exception('You need to have PHP PDO installed to be able to use B2DB');
 			}
-			
+
 			return $retarr;
 		}
 
@@ -790,8 +791,8 @@
 
 			$key = 'b2db_cache_'.$classname;
 			if (!self::$_debug_mode) {
-				\caspar\core\Cache::add($key, self::$_cached_table_classes[$classname]);
-				\caspar\core\Cache::fileAdd($key, self::$_cached_table_classes[$classname]);
+				self::$_cache_object->add($key, self::$_cached_table_classes[$classname]);
+				self::$_cache_object->fileAdd($key, self::$_cached_table_classes[$classname]);
 			}
 		}
 
@@ -881,8 +882,8 @@
 			}
 			$key = 'b2db_cache_'.$classname;
 			if (!self::$_debug_mode) {
-				\caspar\core\Cache::add($key, self::$_cached_entity_classes[$classname]);
-				\caspar\core\Cache::fileAdd($key, self::$_cached_entity_classes[$classname]);
+				self::$_cache_object->add($key, self::$_cached_entity_classes[$classname]);
+				self::$_cache_object->fileAdd($key, self::$_cached_entity_classes[$classname]);
 			}
 		}
 
@@ -891,25 +892,25 @@
 			if (!array_key_exists($classname, self::$_cached_entity_classes))
 			{
 				$entity_key = 'b2db_cache_'.$classname;
-				if (\caspar\core\Cache::has($entity_key)) {
-					self::$_cached_entity_classes[$classname] = \caspar\core\Cache::get($entity_key);
-				} elseif (\caspar\core\Cache::fileHas($entity_key)) {
-					self::$_cached_entity_classes[$classname] = \caspar\core\Cache::fileGet($entity_key);
+				if (self::$_cache_object->has($entity_key)) {
+					self::$_cached_entity_classes[$classname] = self::$_cache_object->get($entity_key);
+				} elseif (self::$_cache_object->fileHas($entity_key)) {
+					self::$_cached_entity_classes[$classname] = self::$_cache_object->fileGet($entity_key);
 				} else {
 					self::cacheEntityClass($classname);
 				}
 			}
 		}
-		
+
 		protected static function _populateCachedTableClassFiles($classname)
 		{
 			if (!array_key_exists($classname, self::$_cached_table_classes))
 			{
 				$key = 'b2db_cache_'.$classname;
-				if (\caspar\core\Cache::has($key)) {
-					self::$_cached_table_classes[$classname] = \caspar\core\Cache::get($key);
-				} elseif (\caspar\core\Cache::fileHas($key)) {
-					self::$_cached_table_classes[$classname] = \caspar\core\Cache::fileGet($key);
+				if (self::$_cache_object->has($key)) {
+					self::$_cached_table_classes[$classname] = self::$_cache_object->get($key);
+				} elseif (self::$_cache_object->fileHas($key)) {
+					self::$_cached_table_classes[$classname] = self::$_cache_object->fileGet($key);
 				} else {
 					self::cacheTableClass($classname);
 				}
@@ -947,7 +948,7 @@
 			}
 			return null;
 		}
-		
+
 		public static function getCachedEntityRelationDetails($classname, $property)
 		{
 			self::_populateCachedClassFiles($classname);
@@ -957,7 +958,7 @@
 			}
 			return null;
 		}
-	
+
 		public static function getCachedColumnDetails($classname, $column)
 		{
 			self::_populateCachedClassFiles($classname);
