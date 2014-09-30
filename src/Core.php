@@ -198,7 +198,7 @@
         public static function sqlHit($sql, $values, $time)
         {
             $backtrace = \debug_backtrace();
-            $reserved_names = array('Core.class.php', 'Saveable.class.php', 'Criteria.class.php', 'Criterion.class.php', 'Resultset.class.php', 'Row.class.php', 'Statement.class.php', 'Transaction.class.php', 'B2DBTable.class.php', 'B2DB.class.php', 'Criteria.class.php', 'B2DBCriterion.class.php', 'B2DBResultset.class.php', 'Row.class.php', 'Statement.class.php', 'Transaction.class.php', 'Table.class.php', 'TBGB2DBTable.class.php');
+            $reserved_names = array('Core.php', 'Saveable.php', 'Criteria.php', 'Criterion.php', 'Resultset.php', 'Row.php', 'Statement.php', 'Transaction.php', 'B2DBTable.php', 'B2DB.php', 'Criteria.php', 'B2DBCriterion.php', 'B2DBResultset.php', 'Row.php', 'Statement.php', 'Transaction.php', 'Table.php', 'TBGB2DBTable.php');
 
             $trace = null;
             foreach ($backtrace as $t)
@@ -211,9 +211,9 @@
             }
 
             if (!$trace)
-                $trace = array('file' => 'unknown', 'line' => 'unknown');
+                $trace = array('file' => 'unknown', 'line' => 'unknown', 'function' => 'unknown');
 
-            self::$_sqlhits[] = array('sql' => $sql, 'values' => $values, 'time' => $time, 'filename' => $trace['file'], 'line' => $trace['line']);
+            self::$_sqlhits[] = array('sql' => $sql, 'values' => $values, 'time' => $time, 'filename' => $trace['file'], 'line' => $trace['line'], 'function' => $trace['function']);
             self::$_sqltiming += $time;
         }
 
