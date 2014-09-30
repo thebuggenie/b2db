@@ -185,6 +185,7 @@
             {
                 self::loadNewTable(new $tbl_name());
             }
+            $tbl_name = ltrim($tbl_name, '\\');
             if (!isset(self::$_tables[$tbl_name]))
             {
                 throw new Exception('Table ' . $tbl_name . ' is not loaded');
