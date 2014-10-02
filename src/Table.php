@@ -877,12 +877,16 @@
 			$foreign_table_class = \get_class($foreign_table);
 			$item_class = (array_key_exists('class', $relation_details)) ? $relation_details['class'] : null;
 			$item_column = null;
+			$item_table_class = null;
 			if ($relation_details['manytomany']) {
 				$item_table_class = Core::getCachedB2DBTableClass($item_class);
 			}
 			if ($relation_details['foreign_column']) {
 				$saveable_class = \get_class($class);
 				$table_details = ($item_class) ? Core::getCachedTableDetails($item_class) : Core::getTableDetails($relation_details['joinclass']);
+				if ($relation_details['orderby']) {
+					$criteria->addOrderBy("{$table_details['name']}.".$relation_details['orderby']);
+				}
 				$criteria->addWhere("{$table_details['name']}.".$relation_details['foreign_column'], $class->getB2DBSaveablePropertyValue(Core::getCachedColumnPropertyName($saveable_class, $foreign_table->getIdColumn())));
 				if (array_key_exists('discriminator', $table_details) && $table_details['discriminator'] && array_key_exists($saveable_class, $table_details['discriminator']['discriminators'])) {
 					$criteria->addWhere($table_details['discriminator']['column'], $table_details['discriminator']['discriminators'][$saveable_class]);
@@ -897,6 +901,9 @@
 					} elseif ($item_class && $details['class'] == $item_table_class) {
 						$item_column = $column;
 					}
+				}
+				if ($relation_details['orderby']) {
+					$criteria->addOrderBy($foreign_table->getB2DBName().".".$relation_details['orderby']);
 				}
 			}
 			return array($criteria, $item_class, $item_column);
