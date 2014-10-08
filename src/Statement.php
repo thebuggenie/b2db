@@ -95,7 +95,7 @@
 
                 if (!$res) {
                     $error = $this->statement->errorInfo();
-                    Core::sqlHit($this, $pretime);
+                    if (Core::isDebugMode()) Core::sqlHit($this, $pretime);
                     throw new Exception($error[2], $this->printSQL());
                 }
                 if (Core::isDebugLoggingEnabled()) \caspar\core\Logging::log('done', 'B2DB');
@@ -114,7 +114,7 @@
 
                 $retval = new Resultset($this);
 
-                Core::sqlHit($this, $pretime);
+                if (Core::isDebugMode()) Core::sqlHit($this, $pretime);
 
                 if (!$this->getCriteria() || $this->getCriteria()->action != 'select') {
                     $this->statement->closeCursor();
