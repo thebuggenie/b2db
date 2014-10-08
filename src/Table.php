@@ -431,7 +431,7 @@
 			$crit->generateInsertSQL();
 
 			$statement = Statement::getPreparedStatement($crit);
-			return $statement->performQuery('insert');
+			return $statement->performQuery();
 		}
 
 		/**
@@ -448,7 +448,7 @@
 
 			$statement = Statement::getPreparedStatement($crit);
 
-			return $statement->performQuery('update');
+			return $statement->performQuery();
 		}
 
 		/**
@@ -468,7 +468,7 @@
 
 			$statement = Statement::getPreparedStatement($crit);
 
-			return $statement->performQuery('update');
+			return $statement->performQuery();
 		}
 
 		/**
@@ -485,7 +485,7 @@
 
 			$statement = Statement::getPreparedStatement($crit);
 
-			return $statement->performQuery('delete');
+			return $statement->performQuery();
 		}
 
 		/**
@@ -504,7 +504,7 @@
 
 			$statement = Statement::getPreparedStatement($crit);
 
-			return $statement->performQuery('delete');
+			return $statement->performQuery();
 		}
 
 		/**
@@ -520,7 +520,7 @@
 
 				$sql = $this->_createToSQL();
 				$statement = Statement::getPreparedStatement($sql);
-				return $statement->performQuery('create');
+				return $statement->performQuery();
 			} catch (\Exception $e) {
 				throw new Exception('Error creating table ' . $this->getB2DBName() . ': ' . $e->getMessage(), $sql);
 			}
@@ -552,7 +552,7 @@
 					$sql .= ");";
 
 					$statement = Statement::getPreparedStatement($sql);
-					$res = $statement->performQuery('create index');
+					$res = $statement->performQuery();
 				}
 			} catch (Exception $e) {
 				throw new Exception('An error occured when trying to create indexes for table "'.$this->getB2DBName().'" (defined in "'.\get_class($this).')": '.$e->getMessage(), $e->getSQL());
@@ -574,7 +574,7 @@
 			try {
 				$sql = $this->_dropToSQL();
 				$statement = Statement::getPreparedStatement($sql);
-				return $statement->performQuery('drop');
+				return $statement->performQuery();
 			} catch (\Exception $e) {
 				throw new Exception('Error dropping table ' . $this->getB2DBName() . ': ' . $e->getMessage(), $sql);
 			}
@@ -790,7 +790,7 @@
 			if (count($sqls)) {
 				foreach ($sqls as $sqlStmt) {
 					$statement = Statement::getPreparedStatement($sqlStmt);
-					$res = $statement->performQuery('alter');
+					$res = $statement->performQuery();
 				}
 			}
 
@@ -807,7 +807,7 @@
 			if (count($sqls)) {
 				foreach ($sqls as $sqlStmt) {
 					$statement = Statement::getPreparedStatement($sqlStmt);
-					$res = $statement->performQuery('alter');
+					$res = $statement->performQuery();
 				}
 			}
 		}
