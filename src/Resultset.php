@@ -89,7 +89,7 @@
 		 */
 		public function getCurrentRow()
 		{
-			if ($this->int_ptr == 0 && class_exists('\\caspar\\core\\Logging'))
+			if ($this->int_ptr == 0 && Core::isDebugLoggingEnabled())
 			{
 				\caspar\core\Logging::log('This is not a valid row');
 			}
@@ -182,7 +182,7 @@
 		public function current()
 		{
 			$row = $this->getCurrentRow();
-			
+
 			return $row;
 		}
 

@@ -42,6 +42,7 @@
         protected static $_transaction_active = false;
         protected static $_tables = array();
         protected static $_debug_mode = true;
+        protected static $_debug_logging = null;
         protected static $_cache_object = null;
         protected static $_cache_dir;
         protected static $_cached_entity_classes = array();
@@ -78,6 +79,14 @@
         public static function isDebugMode()
         {
             return self::$_debug_mode;
+        }
+
+        public static function isDebugLoggingEnabled()
+        {
+            if (self::$_debug_logging === null)
+                self::$_debug_logging = (self::isDebugMode() && class_exists('\\caspar\\core\\Logging'));
+
+            return self::$_debug_logging;
         }
 
         /**
@@ -196,8 +205,16 @@
         /**
          * Register a new SQL call
          */
-        public static function sqlHit($sql, $values, $time)
+        public static function sqlHit(Statement $statement, $pretime)
         {
+            if (!Core::isDebugMode()) return;
+
+            $time = explode(' ', microtime());
+            $posttime = $time[1] + $time[0];
+            $time = $posttime - $pretime;
+            $sql = $statement->printSQL();
+            $values = ($statement->getCriteria() instanceof Criteria) ? $statement->getCriteria()->getValues() : array();
+
             $backtrace = \debug_backtrace();
             $reserved_names = array('Core.php', 'Saveable.php', 'Criteria.php', 'Criterion.php', 'Resultset.php', 'Row.php', 'Statement.php', 'Transaction.php', 'B2DBTable.php', 'B2DB.php', 'Criteria.php', 'B2DBCriterion.php', 'B2DBResultset.php', 'Row.php', 'Statement.php', 'Transaction.php', 'Table.php', 'TBGB2DBTable.php');
 
@@ -214,7 +231,7 @@
             if (!$trace)
                 $trace = array('file' => 'unknown', 'line' => 'unknown', 'function' => 'unknown');
 
-            self::$_sqlhits[] = array('sql' => $sql, 'values' => $values, 'time' => $time, 'filename' => $trace['file'], 'line' => $trace['line'], 'function' => $trace['function']);
+            self::$_sqlhits[] = array('sql' => $sql, 'values' => implode(', ', $values), 'time' => $time, 'filename' => $trace['file'], 'line' => $trace['line'], 'function' => $trace['function']);
             self::$_sqltiming += $time;
         }
 
