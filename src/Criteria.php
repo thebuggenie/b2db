@@ -2,7 +2,7 @@
 
     namespace b2db;
 
-    /**
+/**
      * Criteria class
      *
      * @author Daniel Andre Eikeland <zegenie@zegeniestudios.net>
@@ -18,19 +18,31 @@
      * @package b2db
      * @subpackage core
      */
-    class Criteria {
+    class Criteria
+    {
 
         protected $criterias = array();
+
         protected $jointables = array();
+
         protected $sort_orders = array();
+
         protected $sort_groups = array();
+
         protected $selections = array();
+
         protected $values = array();
+
         protected $distinct = false;
+
         protected $ors = array();
+
         protected $updates = array();
+
         protected $aliases = array();
+
         protected $return_selections = array();
+
         protected $indexby = null;
 
         /**
@@ -39,37 +51,67 @@
          * @var Table
          */
         protected $fromtable;
+
         protected $limit = null;
+
         protected $offset = null;
+
         protected $customsel = false;
+
         public $action;
+
         public $sql;
 
         const DB_EQUALS = '=';
+
         const DB_NOT_EQUALS = '!=';
+
         const DB_GREATER_THAN = '>';
+
         const DB_LESS_THAN = '<';
+
         const DB_GREATER_THAN_EQUAL = '>=';
+
         const DB_LESS_THAN_EQUAL = '<=';
+
         const DB_IS_NULL = 'IS NULL';
+
         const DB_IS_NOT_NULL = 'IS NOT NULL';
+
         const DB_LIKE = 'LIKE';
+
         const DB_ILIKE = 'ILIKE';
+
         const DB_NOT_LIKE = 'NOT LIKE';
+
         const DB_NOT_ILIKE = 'NOT ILIKE';
+
         const DB_IN = 'IN';
+
         const DB_NOT_IN = 'NOT IN';
+
         const DB_LEFT_JOIN = 'LEFT JOIN';
+
         const DB_INNER_JOIN = 'INNER JOIN';
+
         const DB_RIGHT_JOIN = 'RIGHT JOIN';
+
         const DB_COUNT = 'COUNT';
+
         const DB_MAX = 'MAX';
+
         const DB_SUM = 'SUM';
+
         const DB_CONCAT = 'CONCAT';
+
         const DB_LOWER = 'LOWER';
+
         const DB_DISTINCT = 'DISTINCT';
+
         const DB_COUNT_DISTINCT = 'COUNT(DISTINCT';
+
         const SORT_ASC = 'asc';
+
         const SORT_DESC = 'desc';
 
         /**
@@ -79,7 +121,8 @@
          *
          * @return Base2DBCriteria
          */
-        public function __construct($table = null, $setupjointable = false) {
+        public function __construct($table = null, $setupjointable = false)
+        {
             if ($table !== null) {
                 $this->setFromTable($table, $setupjointable);
             }
@@ -94,7 +137,8 @@
          *
          * @return Base2DBCriteria
          */
-        public function setFromTable($table, $setupjointables = false) {
+        public function setFromTable($table, $setupjointables = false)
+        {
             $this->fromtable = $table;
             if ($setupjointables) {
                 $this->setupJoinTables();
@@ -111,7 +155,8 @@
          *
          * @return Criterion
          */
-        public function returnCriterion($column, $value, $operator = self::DB_EQUALS) {
+        public function returnCriterion($column, $value, $operator = self::DB_EQUALS)
+        {
             $ret = new Criterion($column, $value, $operator);
 
             return $ret;
@@ -122,7 +167,8 @@
          *
          * @return array
          */
-        public function getValues() {
+        public function getValues()
+        {
             return $this->values;
         }
 
@@ -137,7 +183,8 @@
          *
          * @return Base2DBCriteria
          */
-        public function addSelectionColumn($column, $alias = '', $special = '', $variable = '', $additional = '') {
+        public function addSelectionColumn($column, $alias = '', $special = '', $variable = '', $additional = '')
+        {
             if (!$this->fromtable instanceof Table) {
                 throw new \Exception('You must set the from-table before adding selection columns', $this->getSQL());
             }
@@ -148,7 +195,8 @@
             return $this;
         }
 
-        protected function _addSelectionColumn($column, $alias = '', $special = '', $variable = '', $additional = '') {
+        protected function _addSelectionColumn($column, $alias = '', $special = '', $variable = '', $additional = '')
+        {
             $this->selections[Core::getTablePrefix() . $column] = array('column' => $column, 'alias' => $alias, 'special' => $special, 'variable' => $variable, 'additional' => $additional);
         }
 
@@ -161,7 +209,8 @@
          *
          * @return Base2DBCriteria
          */
-        public function addOr($column, $value = null, $operator = self::DB_EQUALS) {
+        public function addOr($column, $value = null, $operator = self::DB_EQUALS)
+        {
             if ($column instanceof Criterion) {
                 $this->ors[] = $column;
             } else {
@@ -178,7 +227,8 @@
          *
          * @return Base2DBCriteria
          */
-        public function addUpdate($column, $value) {
+        public function addUpdate($column, $value)
+        {
             if (is_object($value)) {
                 throw new Exception("Invalid value, can't be an object.", $this->getSQL());
             }
@@ -198,7 +248,8 @@
          *
          * @return Base2DBCriteria
          */
-        public function addWhere($column, $value = '', $operator = self::DB_EQUALS, $variable = '', $additional = '', $special = '') {
+        public function addWhere($column, $value = '', $operator = self::DB_EQUALS, $variable = '', $additional = '', $special = '')
+        {
             if ($column instanceof Criterion) {
                 $this->criterias[] = $column;
             } else {
@@ -217,7 +268,8 @@
          *
          * @return Base2DBCriteria
          */
-        public function addInsert($column, $value, $operator = self::DB_EQUALS, $variable = '') {
+        public function addInsert($column, $value, $operator = self::DB_EQUALS, $variable = '')
+        {
             $this->criterias[$column] = array('column' => $column, 'value' => $value, 'operator' => $operator, 'variable' => $variable);
             return $this;
         }
@@ -234,7 +286,8 @@
          *
          * @return Base2DBCriteria
          */
-        public function addJoin($jointable, $foreigncol, $tablecol, $criterias = array(), $jointype = self::DB_LEFT_JOIN, $ontable = null) {
+        public function addJoin($jointable, $foreigncol, $tablecol, $criterias = array(), $jointype = self::DB_LEFT_JOIN, $ontable = null)
+        {
             if (!$jointable instanceof Table) {
                 throw new Exception('Cannot join table ' . $jointable . ' since it is not a table', $this->getSQL());
             }
@@ -258,7 +311,8 @@
             return $jointable;
         }
 
-        public function getRealColumnName($column) {
+        public function getRealColumnName($column)
+        {
             $column_details = explode('.', $column);
             $table_alias = $column_details[0];
             $column = $column_details[1];
@@ -275,11 +329,13 @@
             return "{$real_table_name}.{$column}";
         }
 
-        public function indexBy($column) {
+        public function indexBy($column)
+        {
             $this->indexby = $column;
         }
 
-        public function getIndexBy() {
+        public function getIndexBy()
+        {
             return $this->indexby;
         }
 
@@ -288,7 +344,8 @@
          *
          * @return string
          */
-        protected function _generateSelectAllSQL() {
+        protected function _generateSelectAllSQL()
+        {
             $sqls = array();
             foreach ($this->getSelectionColumns() as $column_name => $column_data) {
                 $str = '';
@@ -301,7 +358,8 @@
         /**
          * Adds all select columns from all available tables in the query
          */
-        protected function _addAllSelectColumns() {
+        protected function _addAllSelectColumns()
+        {
             foreach ($this->fromtable->getAliasColumns() as $aColumn) {
                 $this->_addSelectionColumn($aColumn);
             }
@@ -317,7 +375,8 @@
          *
          * @return array
          */
-        public function getForeignTables() {
+        public function getForeignTables()
+        {
             return $this->jointables;
         }
 
@@ -326,7 +385,8 @@
          *
          * @return Table
          */
-        public function getTable() {
+        public function getTable()
+        {
             return $this->fromtable;
         }
 
@@ -337,7 +397,8 @@
          *
          * @return string
          */
-        public function getColumnName($column) {
+        public function getColumnName($column)
+        {
             if (mb_stripos($column, '.') > 0) {
                 return mb_substr($column, mb_stripos($column, '.') + 1);
             } else {
@@ -350,7 +411,8 @@
          *
          * @return array
          */
-        public function getSelectionColumns() {
+        public function getSelectionColumns()
+        {
             return $this->selections;
         }
 
@@ -363,7 +425,8 @@
          *
          * @return string
          */
-        public function getSelectionColumn($column, $join_column = null, $throw_exceptions = true) {
+        public function getSelectionColumn($column, $join_column = null, $throw_exceptions = true)
+        {
             if (isset($this->selections[$column]))
                 return $this->selections[$column];
             $retval = '';
@@ -402,7 +465,8 @@
          *
          * @return string
          */
-        public function getSelectionAlias($column) {
+        public function getSelectionAlias($column)
+        {
             if (!is_numeric($column) && !is_string($column)) {
                 if (is_array($column) && array_key_exists('column', $column)) {
                     $column = $column['column'];
@@ -424,7 +488,8 @@
          *
          * @return Base2DBCriteria
          */
-        public function addOrderBy($column, $sort = null, $join_column = null) {
+        public function addOrderBy($column, $sort = null, $join_column = null)
+        {
             if ($join_column !== null) {
                 $column = null;
                 foreach ($this->jointables as $table_alias => $join_options) {
@@ -450,7 +515,8 @@
          *
          * @return Base2DBCriteria
          */
-        public function setLimit($limit) {
+        public function setLimit($limit)
+        {
             $this->limit = (int) $limit;
             return $this;
         }
@@ -463,7 +529,8 @@
          *
          * @return Base2DBCriteria
          */
-        public function addGroupBy($column, $sort = null) {
+        public function addGroupBy($column, $sort = null)
+        {
             if (is_array($column)) {
                 foreach ($column as $a_sort) {
                     $this->sort_groups[] = array('column' => $a_sort[0], 'sort' => $a_sort[1]);
@@ -481,7 +548,8 @@
          *
          * @return Base2DBCriteria
          */
-        public function setOffset($offset) {
+        public function setOffset($offset)
+        {
             $this->offset = (int) $offset;
             return $this;
         }
@@ -491,7 +559,8 @@
          *
          * @return string
          */
-        public function getSQL() {
+        public function getSQL()
+        {
             return $this->sql;
         }
 
@@ -500,7 +569,8 @@
          *
          * @param array $join [optional]
          */
-        public function setupJoinTables($join = 'all') {
+        public function setupJoinTables($join = 'all')
+        {
             if (!is_array($join) && $join == 'all') {
                 $foreign_tables = $this->fromtable->getForeignTables();
                 foreach ($foreign_tables as $aForeign) {
@@ -522,7 +592,8 @@
          *
          * @param boolean $all [optional]
          */
-        public function generateSelectSQL($all = false) {
+        public function generateSelectSQL($all = false)
+        {
             if (!$this->fromtable instanceof Table) {
                 throw new Exception('Trying to run a query when no table is being used.', $this->getSQL());
             }
@@ -541,7 +612,8 @@
         /**
          * Generate a "count" query
          */
-        public function generateCountSQL() {
+        public function generateCountSQL()
+        {
             if (!$this->fromtable instanceof Table) {
                 throw new Exception('Trying to run a query when no table is being used.', $this->getSQL());
             }
@@ -560,7 +632,8 @@
          *
          * @param mixed $value
          */
-        protected function _addValue($value) {
+        protected function _addValue($value)
+        {
             if (is_bool($value)) {
                 if (Core::getDBtype() == 'mysql') {
                     $this->values[] = (int) $value;
@@ -575,7 +648,8 @@
         /**
          * Generate an "update" query
          */
-        public function generateUpdateSQL() {
+        public function generateUpdateSQL()
+        {
             if (!$this->fromtable instanceof Table) {
                 throw new Exception('Trying to run a query when no table is being used.', $this->getSQL());
             }
@@ -591,7 +665,8 @@
         /**
          * Generate an "insert" query
          */
-        public function generateInsertSQL() {
+        public function generateInsertSQL()
+        {
             foreach ($this->criterias as $a_crit) {
                 if ($a_crit instanceof Criterion) {
                     throw new Exception('Please use \b2db\Criteria::addInsert() when inserting values into a table.', $this->getSQL());
@@ -611,7 +686,8 @@
         /**
          * Generate a "delete" query
          */
-        public function generateDeleteSQL() {
+        public function generateDeleteSQL()
+        {
             if (!$this->fromtable instanceof Table) {
                 throw new Exception('Trying to run a query when no table is being used.', $this->getSQL());
             }
@@ -624,16 +700,19 @@
             $this->sql = $sql;
         }
 
+        protected function _getTablename()
+        {
+            return Core::getTablePrefix() . $this->fromtable->getB2DBName();
+        }
+
         /**
          * Generate the "delete" part of the query
          *
          * @return string
          */
-        protected function _generateDeleteSQL() {
-            $sql = 'DELETE FROM ';
-            $sql .= Core::getTablePrefix() . $this->fromtable->getB2DBName();
-
-            return $sql;
+        protected function _generateDeleteSQL()
+        {
+            return 'DELETE FROM ' . $this->_getTablename();
         }
 
         /**
@@ -641,43 +720,36 @@
          *
          * @return string
          */
-        protected function _generateInsertSQL() {
-            $sql = 'INSERT INTO ';
-            if (Core::getDBtype() == 'mysql')
-                $sql .= "`";
-            $sql .= Core::getTablePrefix() . $this->fromtable->getB2DBName();
-            if (Core::getDBtype() == 'mysql')
-                $sql .= "`";
-            $sql .= ' (';
-            $first_ins = true;
+        protected function _generateInsertSQL()
+        {
+            $inserts = array();
+            $values = array();
+
+            $tablename = $this->_getTablename();
+            $sql = (Core::getDBtype() == 'mysql') ? "INSERT INTO `{$tablename}`" : "INSERT INTO {$tablename} ";
+
             foreach ($this->criterias as $a_crit) {
-                $sql .= (!$first_ins) ? ', ' : '';
-                if (Core::getDBtype() == 'pgsql') {
-                    $sql .= '"';
-                } elseif (Core::getDBtype() == 'mysql') {
-                    $sql .= '`';
+                $column = mb_substr($a_crit['column'], mb_strpos($a_crit['column'], '.') + 1);
+                switch (Core::getDBtype()) {
+                    case 'pgsql':
+                        $inserts[] = '"'.$column.'"';
+                        break;
+                    case 'mysql':
+                        $inserts[] = '`'.$column.'`';
+                        break;
+                    default:
                 }
-                $sql .= mb_substr($a_crit['column'], mb_strpos($a_crit['column'], '.') + 1);
-                if (Core::getDBtype() == 'pgsql') {
-                    $sql .= '"';
-                } elseif (Core::getDBtype() == 'mysql') {
-                    $sql .= '`';
-                }
-                $first_ins = false;
             }
-            $sql .= ') values (';
-            $first_ins = true;
             foreach ($this->criterias as $a_crit) {
-                $sql .= (!$first_ins) ? ', ' : '';
                 if ($a_crit['variable'] != '') {
-                    $sql .= '@' . $a_crit['variable'];
+                    $values[] = '@' . $a_crit['variable'];
                 } else {
-                    $sql .= '?';
+                    $values[] = '?';
                     $this->_addValue($a_crit['value']);
                 }
-                $first_ins = false;
             }
-            $sql .= ')';
+
+            $sql .= '(' . join(', ', $inserts) . ') values (' . join(', ', $values) . ')';
 
             return $sql;
         }
@@ -687,23 +759,17 @@
          *
          * @return string
          */
-        protected function _generateUpdateSQL() {
-            $sql = 'UPDATE ';
-            $sql .= Core::getTablePrefix() . $this->fromtable->getB2DBName();
-            $sql .= ' SET ';
-            $first_upd = true;
+        protected function _generateUpdateSQL()
+        {
+            $updates = array();
             foreach ($this->updates as $an_upd) {
-                $sql .= (!$first_upd) ? ', ' : '';
-                if (Core::getDBtype() == 'mysql')
-                    $sql .= '`';
-                $sql .= mb_substr($an_upd['column'], mb_strpos($an_upd['column'], '.') + 1);
-                if (Core::getDBtype() == 'mysql')
-                    $sql .= '`';
-                $sql .= self::DB_EQUALS;
-                $sql .= '?';
+                $column = mb_substr($an_upd['column'], mb_strpos($an_upd['column'], '.') + 1);
+                $prefix = (Core::getDBtype() == 'mysql') ? '`'.$column.'`' : $column;
+                $updates[] = $prefix . self::DB_EQUALS . '?';
+
                 $this->_addValue($an_upd['value']);
-                $first_upd = false;
             }
+            $sql = 'UPDATE ' . $this->_getTablename() . ' SET ' . join(', ', $updates);
             return $sql;
         }
 
@@ -712,51 +778,31 @@
          *
          * @return string
          */
-        protected function _generateSelectSQL() {
-            $sql = 'SELECT ';
-            $first_sel = true;
-            if ($this->distinct) {
-                $sql .= ' DISTINCT ';
-            }
+        protected function _generateSelectSQL()
+        {
+            $sql = ($this->distinct) ? 'SELECT DISTINCT ' : 'SELECT ';
+
             if ($this->customsel) {
                 if ($this->distinct && Core::getDBtype() == 'pgsql') {
                     foreach ($this->sort_orders as $a_sort) {
                         $this->addSelectionColumn($a_sort['column']);
                     }
                 }
-                foreach ($this->selections as $column => $a_sel) {
-                    if ($a_sel['special'] != '') {
-                        $sql .= (!$first_sel) ? ', ' : '';
-                        if ($a_sel['variable'] != '') {
-                            $sql .= ' @' . $a_sel['variable'] . ':=';
-                        }
-                        $sql .= mb_strtoupper($a_sel['special']) . '(' . $a_sel['column'] . ')';
-                        $sql .= ($a_sel['additional'] != '') ? ' ' . $a_sel['additional'] . ' ' : '';
-                        if (mb_strlen(mb_stristr($a_sel['special'], '(')) > 0) {
-                            $sql .= ')';
-                        }
-                        if ($a_sel['alias'] != '') {
-                            $sql .= ' AS ' . $a_sel['alias'];
-                        } else {
-                            $sql .= ' AS ' . $this->getSelectionAlias($column);
-                        }
+                $sqls = array();
+                foreach ($this->selections as $column => $selection) {
+                    $alias = ($selection['alias']) ? $selection['alias'] : $this->getSelectionAlias($column);
+                    $sub_sql = (isset($selection['variable']) && $selection['variable'] != '') ? ' @' . $selection['variable'] . ':=' : '';
+                    if ($selection['special'] != '') {
+                        $sub_sql .= mb_strtoupper($selection['special']) . '(' . $selection['column'] . ')';
+                        if ($selection['additional'] != '') $sub_sql .= ' ' . $selection['additional'] . ' ';
+                        if (mb_strpos($selection['special'], '(') !== false) $sub_sql .= ')';
                     } else {
-                        $sql .= (!$first_sel) ? ', ' : '';
-                        if (isset($a_sel['variable']) && $a_sel['variable'] != '') {
-                            $sql .= ' @' . $a_sel['variable'] . ':=';
-                        }
-                        $sql .= $a_sel['column'];
-                        if ($a_sel['alias'] != '') {
-                            $sql .= ' AS ' . $a_sel['alias'];
-                        } else {
-                            $sql .= ' AS ' . $this->getSelectionAlias($column);
-                        }
+                        $sub_sql .= $selection['column'];
                     }
-                    if ($a_sel['alias'] == '') {
-                        $a_sel['alias'] = $this->getSelectionAlias($column);
-                    }
-                    $first_sel = false;
+                    $sub_sql .= ' AS ' . $alias;
+                    $sqls[] = $sub_sql;
                 }
+                $sql .= join(', ', $sqls);
             } else {
                 $this->_addAllSelectColumns();
                 $sql .= $this->_generateSelectAllSQL();
@@ -770,11 +816,9 @@
          *
          * @return string
          */
-        protected function _generateCountSQL() {
-            $sql = 'SELECT COUNT(';
-            if ($this->distinct) {
-                $sql .= ' DISTINCT ';
-            }
+        protected function _generateCountSQL()
+        {
+            $sql = ($this->distinct) ? 'SELECT COUNT(DISTINCT ' : 'SELECT COUNT(';
             $sql .= $this->getSelectionColumn($this->getTable()->getIdColumn());
             $sql .= ') as num_col';
 
@@ -784,8 +828,40 @@
         /**
          * Set the query to distinct mode
          */
-        public function setDistinct() {
+        public function setDistinct()
+        {
             $this->distinct = true;
+        }
+
+        protected function _sanityCheck($details)
+        {
+            if (!in_array($details['operator'], array(self::DB_EQUALS, self::DB_GREATER_THAN, self::DB_GREATER_THAN_EQUAL, self::DB_ILIKE, self::DB_IN, self::DB_IS_NOT_NULL, self::DB_IS_NULL, self::DB_LESS_THAN, self::DB_LESS_THAN_EQUAL, self::DB_LIKE, self::DB_NOT_EQUALS, self::DB_NOT_ILIKE, self::DB_NOT_IN, self::DB_NOT_LIKE)))
+                throw new Exception("Invalid operator", $this->getSQL());
+        }
+
+        protected function _generateSQLPart($part, $strip)
+        {
+            $initial_sql = ($strip) ? $this->getColumnName($part['column']) : $this->getSelectionColumn($part['column']);
+            $sql = (isset($part['special']) && $part['special'] != '') ? $part['special'] . "({$initial_sql})" : $initial_sql;
+
+            if (is_null($part['value']) && !in_array($part['operator'], array(self::DB_IS_NOT_NULL, self::DB_IS_NULL))) {
+                $part['operator'] = ($part['operator'] == self::DB_EQUALS) ? self::DB_IS_NULL : self::DB_IS_NOT_NULL;
+            }
+            $sql .= ' ' . $part['operator'] . ' ';
+
+            if (is_array($part['value'])) {
+                $placeholders = array();
+                foreach ($part['value'] as $value) {
+                    $placeholders[] = '?';
+                    $this->_addValue($value);
+                }
+                $sql .= '(' . join(', ', $placeholders) . ')';
+            } elseif ($part['operator'] != self::DB_IS_NULL && $part['operator'] != self::DB_IS_NOT_NULL) {
+                $sql .= ($part['operator'] == self::DB_IN) ? '(?)' : '?';
+                $this->_addValue($part['value']);
+            }
+
+            return $sql;
         }
 
         /**
@@ -795,110 +871,56 @@
          * @param boolean $strip
          * @return string
          */
-        protected function _parseCriterion($critn, $strip = false) {
+        protected function _parseCriterion($critn, $strip = false)
+        {
             if (!$critn instanceof Criterion) {
                 throw new Exception('The $critn parameter must be of type Criterion', $this->getSQL());
             }
             $sql = '';
-            if (count($critn->ors) > 0) {
-                $sql .= ' (';
-            }
+            $where_sqls = array();
+            $or_sqls = array();
             if (count($critn->wheres) > 0) {
-                $sql .= '(';
-            }
-            $first_crit = true;
-            foreach ($critn->wheres as $a_crit) {
-                if (!$first_crit) {
-                    $sql .= ' AND ';
-                }
-                if (!$a_crit['column'] instanceof Criterion) {
-                    if (!in_array($a_crit['operator'], array(self::DB_EQUALS, self::DB_GREATER_THAN, self::DB_GREATER_THAN_EQUAL, self::DB_ILIKE, self::DB_IN, self::DB_IS_NOT_NULL, self::DB_IS_NULL, self::DB_LESS_THAN, self::DB_LESS_THAN_EQUAL, self::DB_LIKE, self::DB_NOT_EQUALS, self::DB_NOT_ILIKE, self::DB_NOT_IN, self::DB_NOT_LIKE)))
-                        throw new Exception("Invalid operator", $this->getSQL());
-
-                    if (isset($a_crit['special']) && $a_crit['special'] != '') {
-                        $sql .= $a_crit['special'] . '(';
-                    }
-                    $sql .= ($strip) ? $this->getColumnName($a_crit['column']) : $this->getSelectionColumn($a_crit['column']);
-                    if (isset($a_crit['special']) && $a_crit['special'] != '') {
-                        $sql .= ')';
-                    }
-                    if (is_null($a_crit['value']) && !in_array($a_crit['operator'], array(self::DB_IS_NOT_NULL, self::DB_IS_NULL))) {
-                        $a_crit['operator'] = ($a_crit['operator'] == self::DB_EQUALS) ? self::DB_IS_NULL : self::DB_IS_NOT_NULL;
-                    }
-                    $sql .= ' ' . $a_crit['operator'] . ' ';
-                    if (is_numeric($a_crit['value']) && $a_crit['operator'] != self::DB_IN) {
-                        $sql .= '?';
-                        $this->_addValue($a_crit['value']);
-                    } elseif (is_array($a_crit['value']) || $a_crit['operator'] == self::DB_IN) {
-                        $sql .= '(';
-                        $first_crit = true;
-                        if (is_numeric($a_crit['value'])) {
-                            $a_crit['value'] = array($a_crit['value']);
-                        }
-                        foreach ($a_crit['value'] as $a_val) {
-                            if (!$first_crit) {
-                                $sql .= ', ';
-                            }
-                            $sql .= '?';
-                            $this->_addValue($a_val);
-                            $first_crit = false;
-                        }
-                        $sql .= ')';
-                    } elseif ($a_crit['operator'] == self::DB_IS_NULL || $a_crit['operator'] == self::DB_IS_NOT_NULL) {
-                        // don't do anything, since that's taken care of by the operator
+                foreach ($critn->wheres as $where_part) {
+                    if (!$where_part['column'] instanceof Criterion) {
+                        $this->_sanityCheck($where_part);
+                        $where_sqls[] = $this->_generateSQLPart($where_part, $strip);
                     } else {
-                        $sql .= '?';
-                        $this->_addValue($a_crit['value']);
+                        $where_sqls[] = $this->_parseCriterion($where_part['column']);
                     }
-                } else {
-                    $sql .= $this->_parseCriterion($a_crit['column']);
                 }
-                $first_crit = false;
-            }
-            if (count($critn->wheres) > 0) {
-                $sql .= ')';
-            }
-            foreach ($critn->ors as $an_or) {
-                $sql .= ' OR ';
-                if (!$an_or['column'] instanceof Criterion) {
-                    if (!in_array($an_or['operator'], array(self::DB_EQUALS, self::DB_GREATER_THAN, self::DB_GREATER_THAN_EQUAL, self::DB_ILIKE, self::DB_IN, self::DB_IS_NOT_NULL, self::DB_IS_NULL, self::DB_LESS_THAN, self::DB_LESS_THAN_EQUAL, self::DB_LIKE, self::DB_NOT_EQUALS, self::DB_NOT_ILIKE, self::DB_NOT_IN, self::DB_NOT_LIKE)))
-                        throw new Exception("Invalid operator", $this->getSQL());
-
-                    $sql .= ($strip) ? $this->getColumnName($an_or['column']) : $this->getSelectionColumn($an_or['column']);
-                    if (is_null($an_or['value']) && !in_array($an_or['operator'], array(self::DB_IS_NOT_NULL, self::DB_IS_NULL))) {
-                        $an_or['operator'] = ($an_or['operator'] == self::DB_EQUALS) ? self::DB_IS_NULL : self::DB_IS_NOT_NULL;
-                    }
-                    $sql .= ' ' . $an_or['operator'] . ' ';
-                    if (is_numeric($an_or['value'])) {
-                        $sql .= '?';
-                        $this->_addValue($an_or['value']);
-                    } elseif (is_array($an_or['value'])) {
-                        $sql .= '(';
-                        $first_crit = true;
-                        foreach ($an_or['value'] as $a_val) {
-                            if (!$first_crit) {
-                                $sql .= ', ';
-                            }
-                            $sql .= '?';
-                            $this->_addValue($a_val);
-                            $first_crit = false;
-                        }
-                        $sql .= ')';
-                    } elseif ($an_or['operator'] == self::DB_IS_NULL || $an_or['operator'] == self::DB_IS_NOT_NULL) {
-                        // don't do anything, since that's taken care of by the operator
-                    } else {
-                        $sql .= '?';
-                        $this->_addValue($an_or['value']);
-                    }
-                } else {
-                    $sql .= $this->_parseCriterion($an_or['column']);
-                }
+                $sql = '(' . join(' AND ', $where_sqls) . ')';
             }
             if (count($critn->ors) > 0) {
-                $sql .= ') ';
+                foreach ($critn->ors as $or_part) {
+                    if (!$or_part['column'] instanceof Criterion) {
+                        $this->_sanityCheck($or_part);
+                        $or_sqls[] = $this->_generateSQLPart($or_part, $strip);
+                    } else {
+                        $or_sqls[] = $this->_parseCriterion($or_part['column']);
+                    }
+                }
+                $sql = ' (' . $sql . ' OR ' . join (' OR ', $or_sqls) . ') ';
             }
 
             return $sql;
+        }
+
+        protected function _generateWherePart($strip)
+        {
+            $where_sqls = array();
+            $or_sqls = array();
+            foreach ($this->criterias as $a_crit) {
+                $where_sqls[] = $this->_parseCriterion($a_crit, $strip);
+            }
+            $sql = join(' AND ', $where_sqls);
+            if (count($this->ors) > 0) {
+                foreach ($this->ors as $a_crit) {
+                    $or_sqls[] = $this->_parseCriterion($a_crit, $strip);
+                }
+                $sql = '(' . $sql . ' OR ' . join(' OR ', $or_sqls) . ')';
+            }
+
+            return ' WHERE ' . $sql;
         }
 
         /**
@@ -908,85 +930,52 @@
          *
          * @return string
          */
-        protected function _generateWhereSQL($strip = false) {
+        protected function _generateWhereSQL($strip = false)
+        {
             $sql = '';
             if (count($this->criterias) > 0) {
-                $sql = ' WHERE ';
-                $first_crit = true;
-                if (count($this->ors) > 0) {
-                    $sql .= '(';
-                }
-                foreach ($this->criterias as $a_crit) {
-                    if (!$first_crit) {
-                        $sql .= ' AND ';
-                    }
-                    $sql .= $this->_parseCriterion($a_crit, $strip);
-                    $first_crit = false;
-                }
-                if (count($this->ors) > 0) {
-                    foreach ($this->ors as $a_crit) {
-                        $sql .= ' OR ';
-                        $sql .= $this->_parseCriterion($a_crit, $strip);
-                    }
-                }
-                if (count($this->ors) > 0) {
-                    $sql .= ')';
-                }
+                $sql = $this->_generateWherePart($strip);
             }
             if (count($this->sort_groups) > 0 || (count($this->sort_orders) > 0 && $this->action == 'count')) {
-                $first_crit = true;
                 $group_columns = array();
-                $sql .= ' GROUP BY ';
+                $groups = array();
                 foreach ($this->sort_groups as $a_group) {
-                    if (!$first_crit) {
-                        $sql .= ', ';
-                    }
                     $column_name = $this->getSelectionColumn($a_group['column']);
-                    $sql .= $column_name . ' ' . $a_group['sort'];
-                    $first_crit = false;
+                    $groups[] = $column_name . ' ' . $a_group['sort'];
                     if ($this->action == 'count') {
                         $group_columns[$column_name] = $column_name;
                     }
                 }
+                $sql .= ' GROUP BY ' . join(', ', $groups);
                 if ($this->action == 'count') {
+                    $sort_groups = array();
                     foreach ($this->sort_orders as $a_sort) {
                         $column_name = $this->getSelectionColumn($a_sort['column']);
                         if (!array_key_exists($column_name, $group_columns)) {
-                            if (!$first_crit) {
-                                $sql .= ', ';
-                            }
-                            $sql .= $column_name . ' ';
-                            $first_crit = false;
+                            $sort_groups[] = $column_name . ' ';
                         }
                     }
+                    $sql .= join(', ', $sort_groups);
                 }
             }
             if (count($this->sort_orders) > 0) {
-                $first_crit = true;
-                $sql .= ' ORDER BY ';
+                $sort_sqls = array();
                 foreach ($this->sort_orders as $a_sort) {
-                    if (!$first_crit) {
-                        $sql .= ', ';
-                    }
                     if (is_array($a_sort['sort'])) {
-                        $sqls = array();
+                        $subsort_sqls = array();
                         foreach ($a_sort['sort'] as $sort_elm) {
-                            $sqls[] = $this->getSelectionColumn($a_sort['column']) . '=' . $sort_elm;
+                            $subsort_sqls[] = $this->getSelectionColumn($a_sort['column']) . '=' . $sort_elm;
                         }
-                        $sql .= join(',', $sqls);
+                        $sort_sqls[] = join(',', $subsort_sqls);
                     } else {
-                        $sql .= $this->getSelectionColumn($a_sort['column']) . ' ' . $a_sort['sort'];
+                        $sort_sqls[] = $this->getSelectionColumn($a_sort['column']) . ' ' . $a_sort['sort'];
                     }
-                    $first_crit = false;
                 }
+                $sql .= ' ORDER BY ' . join(', ', $sort_sqls);
             }
             if ($this->action == 'select') {
-                if ($this->limit != null) {
-                    $sql .= ' LIMIT ' . (int) $this->limit;
-                }
-                if ($this->offset != null) {
-                    $sql .= ' OFFSET ' . (int) $this->offset;
-                }
+                if ($this->limit != null) $sql .= ' LIMIT ' . (int) $this->limit;
+                if ($this->offset != null) $sql .= ' OFFSET ' . (int) $this->offset;
             }
 
             return $sql;
@@ -997,7 +986,8 @@
          *
          * @return string
          */
-        protected function _generateJoinSQL() {
+        protected function _generateJoinSQL()
+        {
             $sql = ' FROM ' . Core::getTablePrefix() . $this->fromtable->getB2DBName() . ' ' . $this->fromtable->getB2DBAlias();
             foreach ($this->jointables as $a_jt) {
                 $sql .= ' ' . $a_jt['jointype'] . ' ' . Core::getTablePrefix() . $a_jt['jointable']->getB2DBName() . ' ' . $a_jt['jointable']->getB2DBAlias();
