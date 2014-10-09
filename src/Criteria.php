@@ -2,7 +2,7 @@
 
     namespace b2db;
 
-/**
+    /**
      * Criteria class
      *
      * @author Daniel Andre Eikeland <zegenie@zegeniestudios.net>
@@ -732,10 +732,10 @@
                 $column = mb_substr($a_crit['column'], mb_strpos($a_crit['column'], '.') + 1);
                 switch (Core::getDBtype()) {
                     case 'pgsql':
-                        $inserts[] = '"'.$column.'"';
+                        $inserts[] = '"' . $column . '"';
                         break;
                     case 'mysql':
-                        $inserts[] = '`'.$column.'`';
+                        $inserts[] = '`' . $column . '`';
                         break;
                     default:
                 }
@@ -764,7 +764,7 @@
             $updates = array();
             foreach ($this->updates as $an_upd) {
                 $column = mb_substr($an_upd['column'], mb_strpos($an_upd['column'], '.') + 1);
-                $prefix = (Core::getDBtype() == 'mysql') ? '`'.$column.'`' : $column;
+                $prefix = (Core::getDBtype() == 'mysql') ? '`' . $column . '`' : $column;
                 $updates[] = $prefix . self::DB_EQUALS . '?';
 
                 $this->_addValue($an_upd['value']);
@@ -794,8 +794,10 @@
                     $sub_sql = (isset($selection['variable']) && $selection['variable'] != '') ? ' @' . $selection['variable'] . ':=' : '';
                     if ($selection['special'] != '') {
                         $sub_sql .= mb_strtoupper($selection['special']) . '(' . $selection['column'] . ')';
-                        if ($selection['additional'] != '') $sub_sql .= ' ' . $selection['additional'] . ' ';
-                        if (mb_strpos($selection['special'], '(') !== false) $sub_sql .= ')';
+                        if ($selection['additional'] != '')
+                            $sub_sql .= ' ' . $selection['additional'] . ' ';
+                        if (mb_strpos($selection['special'], '(') !== false)
+                            $sub_sql .= ')';
                     } else {
                         $sub_sql .= $selection['column'];
                     }
@@ -899,7 +901,7 @@
                         $or_sqls[] = $this->_parseCriterion($or_part['column']);
                     }
                 }
-                $sql = ' (' . $sql . ' OR ' . join (' OR ', $or_sqls) . ') ';
+                $sql = ' (' . $sql . ' OR ' . join(' OR ', $or_sqls) . ') ';
             }
 
             return $sql;
@@ -974,8 +976,10 @@
                 $sql .= ' ORDER BY ' . join(', ', $sort_sqls);
             }
             if ($this->action == 'select') {
-                if ($this->limit != null) $sql .= ' LIMIT ' . (int) $this->limit;
-                if ($this->offset != null) $sql .= ' OFFSET ' . (int) $this->offset;
+                if ($this->limit != null)
+                    $sql .= ' LIMIT ' . (int) $this->limit;
+                if ($this->offset != null)
+                    $sql .= ' OFFSET ' . (int) $this->offset;
             }
 
             return $sql;

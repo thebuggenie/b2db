@@ -2,7 +2,7 @@
 
     namespace b2db;
 
-/**
+    /**
      * B2DB Core class
      *
      * @author Daniel Andre Eikeland <zegenie@zegeniestudios.net>
@@ -27,25 +27,45 @@
          * @var \PDO
          */
         protected static $_db_connection = null;
+
         protected static $_db_host;
+
         protected static $_db_uname;
+
         protected static $_db_pwd;
+
         protected static $_db_name;
+
         protected static $_db_type;
+
         protected static $_db_port;
+
         protected static $_dsn;
+
         protected static $_tableprefix = '';
+
         protected static $_sqlhits = array();
+
         protected static $_sqltiming;
+
         protected static $_throwhtmlexception = true;
+
         protected static $_aliascnt = 0;
+
         protected static $_transaction_active = false;
+
         protected static $_tables = array();
+
         protected static $_debug_mode = true;
+
         protected static $_debug_logging = null;
+
         protected static $_cache_object = null;
+
         protected static $_cache_dir;
+
         protected static $_cached_entity_classes = array();
+
         protected static $_cached_table_classes = array();
 
         /**
@@ -106,8 +126,7 @@
          */
         public static function initialize($configuration = array(), $cache_object = null)
         {
-            try
-            {
+            try {
                 if (array_key_exists('dsn', $configuration) && $configuration['dsn'])
                     self::setDSN($configuration['dsn']);
                 if (array_key_exists('driver', $configuration) && $configuration['driver'])
@@ -126,9 +145,7 @@
                     self::setTablePrefix($configuration['tableprefix']);
 
                 self::$_cache_object = $cache_object;
-            }
-            catch (\Exception $e)
-            {
+            } catch (\Exception $e) {
                 throw $e;
             }
         }
@@ -168,15 +185,11 @@
             $string .= "    tableprefix: '" . self::getTablePrefix() . "'\n";
             $string .= "    cacheclass: 'TBGCache'\n";
             $string .= "\n";
-            try
-            {
-                if (\file_put_contents($bootstrap_location, $string) === false)
-                {
+            try {
+                if (\file_put_contents($bootstrap_location, $string) === false) {
                     throw new Exception('Could not save the database connection details');
                 }
-            }
-            catch (\Exception $e)
-            {
+            } catch (\Exception $e) {
                 throw $e;
             }
         }
@@ -190,13 +203,11 @@
          */
         public static function getTable($tbl_name)
         {
-            if (!isset(self::$_tables[$tbl_name]))
-            {
+            if (!isset(self::$_tables[$tbl_name])) {
                 self::loadNewTable(new $tbl_name());
             }
             $tbl_name = ltrim($tbl_name, '\\');
-            if (!isset(self::$_tables[$tbl_name]))
-            {
+            if (!isset(self::$_tables[$tbl_name])) {
                 throw new Exception('Table ' . $tbl_name . ' is not loaded');
             }
             return self::$_tables[$tbl_name];
@@ -207,7 +218,8 @@
          */
         public static function sqlHit(Statement $statement, $pretime)
         {
-            if (!Core::isDebugMode()) return;
+            if (!Core::isDebugMode())
+                return;
 
             $time = explode(' ', microtime());
             $posttime = $time[1] + $time[0];
@@ -219,10 +231,8 @@
             $reserved_names = array('Core.php', 'Saveable.php', 'Criteria.php', 'Criterion.php', 'Resultset.php', 'Row.php', 'Statement.php', 'Transaction.php', 'B2DBTable.php', 'B2DB.php', 'Criteria.php', 'B2DBCriterion.php', 'B2DBResultset.php', 'Row.php', 'Statement.php', 'Transaction.php', 'Table.php', 'TBGB2DBTable.php');
 
             $trace = null;
-            foreach ($backtrace as $t)
-            {
-                if (!\in_array(\basename($t['file']), $reserved_names))
-                {
+            foreach ($backtrace as $t) {
+                if (!\in_array(\basename($t['file']), $reserved_names)) {
                     $trace = $t;
                     break;
                 }
@@ -262,8 +272,7 @@
          */
         public static function getDBlink()
         {
-            if (!self::$_db_connection instanceof \PDO)
-            {
+            if (!self::$_db_connection instanceof \PDO) {
                 self::doConnect();
             }
             return self::$_db_connection;
@@ -277,12 +286,9 @@
         public static function simpleQuery($sql)
         {
             self::$_sqlhits++;
-            try
-            {
+            try {
                 $res = self::getDBLink()->query($sql);
-            }
-            catch (\PDOException $e)
-            {
+            } catch (\PDOException $e) {
                 throw new Exception($e->getMessage());
             }
             return $res;
@@ -296,23 +302,18 @@
         public static function setDSN($dsn)
         {
             $dsn_details = \parse_url($dsn);
-            if (!\array_key_exists('scheme', $dsn_details))
-            {
+            if (!\array_key_exists('scheme', $dsn_details)) {
                 throw new Exception('This does not look like a valid DSN - cannot read the database type');
             }
-            try
-            {
+            try {
                 self::setDBtype($dsn_details['scheme']);
                 $dsn_details = \explode(';', $dsn_details['path']);
-                foreach ($dsn_details as $dsn_detail)
-                {
+                foreach ($dsn_details as $dsn_detail) {
                     $detail_info = \explode('=', $dsn_detail);
-                    if (\count($detail_info) != 2)
-                    {
+                    if (\count($detail_info) != 2) {
                         throw new B2DBException('This does not look like a valid DSN - cannot read the connection details');
                     }
-                    switch ($detail_info[0])
-                    {
+                    switch ($detail_info[0]) {
                         case 'host':
                             self::setHost($detail_info[1]);
                             break;
@@ -324,9 +325,7 @@
                             break;
                     }
                 }
-            }
-            catch (\Exception $e)
-            {
+            } catch (\Exception $e) {
                 throw $e;
             }
             self::$_dsn = $dsn;
@@ -338,8 +337,7 @@
         protected static function _generateDSN()
         {
             $dsn = self::getDBtype() . ":host=" . self::getHost();
-            if (self::getPort())
-            {
+            if (self::getPort()) {
                 $dsn .= ';port=' . self::getPort();
             }
             $dsn .= ';dbname=' . self::getDBname();
@@ -353,8 +351,7 @@
          */
         public static function getDSN()
         {
-            if (self::$_dsn === null)
-            {
+            if (self::$_dsn === null) {
                 self::_generateDSN();
             }
             return self::$_dsn;
@@ -488,8 +485,7 @@
          */
         public static function setDBtype($dbtype)
         {
-            if (self::hasDBEngine($dbtype) == false)
-            {
+            if (self::hasDBEngine($dbtype) == false) {
                 throw new Exception('The selected database is not supported: "' . $dbtype . '".');
             }
             self::$_db_type = $dbtype;
@@ -502,8 +498,7 @@
          */
         public static function getDBtype()
         {
-            if (!self::$_db_type && \defined('B2DB_SQLTYPE'))
-            {
+            if (!self::$_db_type && \defined('B2DB_SQLTYPE')) {
                 self::setDBtype(B2DB_SQLTYPE);
             }
             return self::$_db_type;
@@ -519,32 +514,24 @@
          */
         public static function doConnect()
         {
-            if (!\class_exists('\\PDO'))
-            {
+            if (!\class_exists('\\PDO')) {
                 throw new B2DBException('B2DB needs the PDO PHP libraries installed. See http://php.net/PDO for more information.');
             }
-            try
-            {
+            try {
                 $uname = self::getUname();
                 $pwd = self::getPasswd();
-                if (self::$_db_connection instanceof \PDO)
-                {
+                if (self::$_db_connection instanceof \PDO) {
                     self::$_db_connection = null;
                 }
                 $dsn = self::getDSN();
                 self::$_db_connection = new \PDO($dsn, $uname, $pwd);
-                if (!self::$_db_connection instanceof \PDO)
-                {
+                if (!self::$_db_connection instanceof \PDO) {
                     throw new Exception('Could not connect to the database, but not caught by PDO');
                 }
                 self::getDBLink()->query('SET NAMES UTF8');
-            }
-            catch (\PDOException $e)
-            {
+            } catch (\PDOException $e) {
                 throw new Exception("Could not connect to the database [" . $e->getMessage() . "], dsn: {$dsn}");
-            }
-            catch (Exception $e)
-            {
+            } catch (Exception $e) {
                 throw $e;
             }
         }
@@ -585,8 +572,7 @@
 
         public static function getCacheDir()
         {
-            if (self::$_cache_dir === null)
-            {
+            if (self::$_cache_dir === null) {
                 $cache_dir = (\defined('B2DB_CACHEPATH')) ? \realpath(B2DB_CACHEPATH) : \realpath(B2DB_BASEPATH . 'cache/');
                 self::$_cache_dir = $cache_dir;
             }
@@ -624,12 +610,10 @@
         public static function fatalError(\Exception $exception)
         {
             $ob_status = \ob_get_status();
-            if (!empty($ob_status) && $ob_status['status'] != PHP_OUTPUT_HANDLER_END)
-            {
+            if (!empty($ob_status) && $ob_status['status'] != PHP_OUTPUT_HANDLER_END) {
                 \ob_end_clean();
             }
-            if (self::$_throwhtmlexception)
-            {
+            if (self::$_throwhtmlexception) {
                 echo "
 				<style>
 				body { background-color: #DFDFDF; font-family: \"Droid Sans\", \"Trebuchet MS\", \"Liberation Sans\", \"Nimbus Sans L\", \"Luxi Sans\", Verdana, sans-serif; font-size: 13px; }
@@ -658,35 +642,25 @@
 					<h2>The following error occured:</h2>
 					<i>" . $exception->getMessage() . "</i><br>
 					";
-                if ($exception->getSQL())
-                {
+                if ($exception->getSQL()) {
                     echo "<h2>SQL was:</h2>";
                     echo $exception->getSQL();
                     echo '<br>';
                 }
                 echo "<h2>Stack trace:</h2>
 					<ul>";
-                foreach ($exception->getTrace() as $trace_element)
-                {
+                foreach ($exception->getTrace() as $trace_element) {
                     echo '<li>';
-                    if (\array_key_exists('class', $trace_element))
-                    {
+                    if (\array_key_exists('class', $trace_element)) {
                         echo '<strong>' . $trace_element['class'] . $trace_element['type'] . $trace_element['function'] . '()</strong><br>';
-                    }
-                    elseif (\array_key_exists('function', $trace_element))
-                    {
+                    } elseif (\array_key_exists('function', $trace_element)) {
                         echo '<strong>' . $trace_element['function'] . '()</strong><br>';
-                    }
-                    else
-                    {
+                    } else {
                         echo '<strong>unknown function</strong><br>';
                     }
-                    if (\array_key_exists('file', $trace_element))
-                    {
+                    if (\array_key_exists('file', $trace_element)) {
                         echo '<span style="color: #55F;">' . $trace_element['file'] . '</span>, line ' . $trace_element['line'];
-                    }
-                    else
-                    {
+                    } else {
                         echo '<span style="color: #C95;">unknown file</span>';
                     }
                     echo '</li>';
@@ -696,9 +670,7 @@
 					<b class=\"xbottom\"><b class=\"xb4\"></b><b class=\"xb3\"></b><b class=\"xb2\"></b><b class=\"xb1\"></b></b>
 				</div>
 				";
-            }
-            else
-            {
+            } else {
                 echo "B2DB error\n";
                 echo 'The following error occurred in ' . $e->getFile() . ' at line ' . $e->getLine() . ":\n";
                 echo $e->getMessage() . "\n\n";
@@ -738,8 +710,7 @@
         {
             $retarr = array();
 
-            if (\class_exists('\PDO'))
-            {
+            if (\class_exists('\PDO')) {
                 $retarr['mysql'] = 'MySQL';
                 $retarr['pgsql'] = 'PostgreSQL';
                 $retarr['mssql'] = 'Microsoft SQL Server';
@@ -751,9 +722,7 @@
                   $retarr['ibm'] = 'IBM';
                   $retarr['oci'] = 'Oracle';
                  */
-            }
-            else
-            {
+            } else {
                 throw new Exception('You need to have PHP PDO installed to be able to use B2DB');
             }
 
@@ -774,8 +743,7 @@
 
         protected static function cacheTableClass($classname)
         {
-            if (!\class_exists($classname))
-            {
+            if (!\class_exists($classname)) {
                 throw new Exception("The class '{$classname}' does not exist");
             }
             self::$_cached_table_classes[$classname] = array('entity' => null, 'name' => null, 'discriminator' => null);
@@ -783,8 +751,7 @@
             $reflection = new \ReflectionClass($classname);
             $docblock = $reflection->getDocComment();
             $annotationset = new AnnotationSet($docblock);
-            if (!$table_annotation = $annotationset->getAnnotation('Table'))
-            {
+            if (!$table_annotation = $annotationset->getAnnotation('Table')) {
                 throw new Exception("The class '{$classname}' does not have a proper @Table annotation");
             }
             $table_name = $table_annotation->getProperty('name');
@@ -792,28 +759,24 @@
             if ($entity_annotation = $annotationset->getAnnotation('Entity'))
                 self::$_cached_table_classes[$classname]['entity'] = $entity_annotation->getProperty('class');
 
-            if ($entities_annotation = $annotationset->getAnnotation('Entities'))
-            {
+            if ($entities_annotation = $annotationset->getAnnotation('Entities')) {
                 $details = array('identifier' => $entities_annotation->getProperty('identifier'), 'classes' => $annotationset->getAnnotation('SubClasses')->getProperties());
                 self::$_cached_table_classes[$classname]['entities'] = $details;
             }
 
-            if ($discriminator_annotation = $annotationset->getAnnotation('Discriminator'))
-            {
+            if ($discriminator_annotation = $annotationset->getAnnotation('Discriminator')) {
                 $details = array('column' => "{$table_name}." . $discriminator_annotation->getProperty('column'), 'discriminators' => $annotationset->getAnnotation('Discriminators')->getProperties());
                 self::$_cached_table_classes[$classname]['discriminator'] = $details;
             }
 
-            if (!$table_annotation->hasProperty('name'))
-            {
+            if (!$table_annotation->hasProperty('name')) {
                 throw new Exception("The class @Table annotation in '{$classname}' is missing required 'name' property");
             }
 
             self::$_cached_table_classes[$classname]['name'] = $table_name;
 
             $key = 'b2db_cache_' . $classname;
-            if (!self::$_debug_mode)
-            {
+            if (!self::$_debug_mode) {
                 self::$_cache_object->add($key, self::$_cached_table_classes[$classname]);
                 self::$_cache_object->fileAdd($key, self::$_cached_table_classes[$classname]);
             }
@@ -825,51 +788,39 @@
             $reflection = new \ReflectionClass($rc_name);
             $annotationset = new AnnotationSet($reflection->getDocComment());
 
-            if ($reflection_classname === null)
-            {
+            if ($reflection_classname === null) {
                 self::$_cached_entity_classes[$classname] = array('columns' => array(), 'relations' => array(), 'foreign_columns' => array(),);
-                if (!$annotation = $annotationset->getAnnotation('Table'))
-                {
+                if (!$annotation = $annotationset->getAnnotation('Table')) {
                     throw new Exception("The class '{$classname}' is missing a valid @Table annotation");
-                }
-                else
-                {
+                } else {
                     $tablename = $annotation->getProperty('name');
                 }
-                if (!\class_exists($tablename))
-                {
+                if (!\class_exists($tablename)) {
                     throw new Exception("The class table class '{$tablename}' for class '{$classname}' does not exist");
                 }
                 self::$_cached_entity_classes[$classname]['table'] = $tablename;
                 self::_populateCachedTableClassFiles($tablename);
-                if (($re = $reflection->getExtension()) && $classnames = $re->getClassNames())
-                {
-                    foreach ($classnames as $extends_classname)
-                    {
+                if (($re = $reflection->getExtension()) && $classnames = $re->getClassNames()) {
+                    foreach ($classnames as $extends_classname) {
                         self::cacheEntityClass($classname, $extends_classname);
                     }
                 }
             }
-            if (!\array_key_exists('name', self::$_cached_table_classes[self::$_cached_entity_classes[$classname]['table']]))
-            {
+            if (!\array_key_exists('name', self::$_cached_table_classes[self::$_cached_entity_classes[$classname]['table']])) {
                 throw new Exception("The class @Table annotation in '" . self::$_cached_entity_classes[$classname]['table'] . "' is missing required 'name' property");
             }
             $column_prefix = self::$_cached_table_classes[self::$_cached_entity_classes[$classname]['table']]['name'] . '.';
 
-            foreach ($reflection->getProperties() as $property)
-            {
+            foreach ($reflection->getProperties() as $property) {
                 if ($property instanceof \ReflectionProperty)
                     ;
                 $annotationset = new AnnotationSet($property->getDocComment());
-                if ($annotationset->hasAnnotations())
-                {
+                if ($annotationset->hasAnnotations()) {
                     $property_name = $property->getName();
-                    if ($column_annotation = $annotationset->getAnnotation('Column'))
-                    {
+                    if ($column_annotation = $annotationset->getAnnotation('Column')) {
                         $column_name = $column_prefix . (($column_annotation->hasProperty('name')) ? $column_annotation->getProperty('name') : substr($property_name, 1));
                         $column = array('property' => $property_name, 'default_value' => (($column_annotation->hasProperty('default_value')) ? $column_annotation->getProperty('default_value') : null), 'not_null' => (($column_annotation->hasProperty('not_null')) ? $column_annotation->getProperty('not_null') : false), 'name' => $column_name, 'type' => $column_annotation->getProperty('type'));
-                        switch ($column['type'])
-                        {
+                        switch ($column['type']) {
                             case 'serializable':
                                 $column['type'] = 'serializable';
                                 $column['length'] = ($column_annotation->hasProperty('length')) ? $column_annotation->getProperty('length') : null;
@@ -885,20 +836,17 @@
                                 $column['auto_inc'] = ($column_annotation->hasProperty('auto_increment')) ? $column_annotation->getProperty('auto_increment') : false;
                                 $column['unsigned'] = ($column_annotation->hasProperty('unsigned')) ? $column_annotation->getProperty('unsigned') : false;
                                 $column['length'] = ($column_annotation->hasProperty('length')) ? $column_annotation->getProperty('length') : 10;
-                                if ($column['type'] != 'float')
-                                {
+                                if ($column['type'] != 'float') {
                                     $column['default_value'] = ($column_annotation->hasProperty('default_value')) ? $column_annotation->getProperty('default_value') : 0;
                                 }
                                 break;
                         }
                         self::$_cached_entity_classes[$classname]['columns'][$column_name] = $column;
                     }
-                    if ($annotation = $annotationset->getAnnotation('Id'))
-                    {
+                    if ($annotation = $annotationset->getAnnotation('Id')) {
                         self::$_cached_entity_classes[$classname]['id_column'] = $column_name;
                     }
-                    if ($annotation = $annotationset->getAnnotation('Relates'))
-                    {
+                    if ($annotation = $annotationset->getAnnotation('Relates')) {
                         $value = $annotation->getProperty('class');
                         $collection = (bool) $annotation->getProperty('collection');
                         $manytomany = (bool) $annotation->getProperty('manytomany');
@@ -907,10 +855,8 @@
                         $orderby = $annotation->getProperty('orderby');
                         $f_column = $annotation->getProperty('column');
                         self::$_cached_entity_classes[$classname]['relations'][$property_name] = array('collection' => $collection, 'property' => $property_name, 'foreign_column' => $foreign_column, 'manytomany' => $manytomany, 'joinclass' => $joinclass, 'class' => $annotation->getProperty('class'), 'column' => $f_column, 'orderby' => $orderby);
-                        if (!$collection)
-                        {
-                            if (!$column_annotation)
-                            {
+                        if (!$collection) {
+                            if (!$column_annotation) {
                                 throw new Exception("The property '{$property_name}' in class '{$classname}' is missing an @Column annotation, or is improperly marked as not being a collection");
                             }
                             $column_name = $column_prefix . (($annotation->hasProperty('name')) ? $annotation->getProperty('name') : substr($property_name, 1));
@@ -922,8 +868,7 @@
                 }
             }
             $key = 'b2db_cache_' . $classname;
-            if (!self::$_debug_mode)
-            {
+            if (!self::$_debug_mode) {
                 self::$_cache_object->add($key, self::$_cached_entity_classes[$classname]);
                 self::$_cache_object->fileAdd($key, self::$_cached_entity_classes[$classname]);
             }
@@ -931,19 +876,13 @@
 
         protected static function _populateCachedClassFiles($classname)
         {
-            if (!array_key_exists($classname, self::$_cached_entity_classes))
-            {
+            if (!array_key_exists($classname, self::$_cached_entity_classes)) {
                 $entity_key = 'b2db_cache_' . $classname;
-                if (self::$_cache_object->has($entity_key))
-                {
+                if (self::$_cache_object->has($entity_key)) {
                     self::$_cached_entity_classes[$classname] = self::$_cache_object->get($entity_key);
-                }
-                elseif (self::$_cache_object->fileHas($entity_key))
-                {
+                } elseif (self::$_cache_object->fileHas($entity_key)) {
                     self::$_cached_entity_classes[$classname] = self::$_cache_object->fileGet($entity_key);
-                }
-                else
-                {
+                } else {
                     self::cacheEntityClass($classname);
                 }
             }
@@ -951,19 +890,13 @@
 
         protected static function _populateCachedTableClassFiles($classname)
         {
-            if (!array_key_exists($classname, self::$_cached_table_classes))
-            {
+            if (!array_key_exists($classname, self::$_cached_table_classes)) {
                 $key = 'b2db_cache_' . $classname;
-                if (self::$_cache_object->has($key))
-                {
+                if (self::$_cache_object->has($key)) {
                     self::$_cached_table_classes[$classname] = self::$_cache_object->get($key);
-                }
-                elseif (self::$_cache_object->fileHas($key))
-                {
+                } elseif (self::$_cache_object->fileHas($key)) {
                     self::$_cached_table_classes[$classname] = self::$_cache_object->fileGet($key);
-                }
-                else
-                {
+                } else {
                     self::cacheTableClass($classname);
                 }
             }
@@ -972,8 +905,7 @@
         public static function getTableDetails($classname)
         {
             $table = $classname::getTable();
-            if ($table instanceof Table)
-            {
+            if ($table instanceof Table) {
                 self::_populateCachedTableClassFiles($classname);
                 return array('columns' => $table->getColumns(),
                     'foreign_columns' => $table->getForeignColumns(),
@@ -987,10 +919,8 @@
         public static function getCachedTableDetails($classname)
         {
             self::_populateCachedClassFiles($classname);
-            if (\array_key_exists($classname, self::$_cached_entity_classes) && \array_key_exists('columns', self::$_cached_entity_classes[$classname]))
-            {
-                if (!array_key_exists('id_column', self::$_cached_entity_classes[$classname]))
-                {
+            if (\array_key_exists($classname, self::$_cached_entity_classes) && \array_key_exists('columns', self::$_cached_entity_classes[$classname])) {
+                if (!array_key_exists('id_column', self::$_cached_entity_classes[$classname])) {
                     throw new Exception('Cannot find an id column for this table.');
                 }
                 return array('columns' => self::$_cached_entity_classes[$classname]['columns'],
@@ -1006,8 +936,7 @@
         public static function getCachedEntityRelationDetails($classname, $property)
         {
             self::_populateCachedClassFiles($classname);
-            if (\array_key_exists($classname, self::$_cached_entity_classes) && \array_key_exists($property, self::$_cached_entity_classes[$classname]['relations']))
-            {
+            if (\array_key_exists($classname, self::$_cached_entity_classes) && \array_key_exists($property, self::$_cached_entity_classes[$classname]['relations'])) {
                 return self::$_cached_entity_classes[$classname]['relations'][$property];
             }
             return null;
@@ -1016,8 +945,7 @@
         public static function getCachedColumnDetails($classname, $column)
         {
             self::_populateCachedClassFiles($classname);
-            if (\array_key_exists($classname, self::$_cached_entity_classes) && \array_key_exists($column, self::$_cached_entity_classes[$classname]['columns']))
-            {
+            if (\array_key_exists($classname, self::$_cached_entity_classes) && \array_key_exists($column, self::$_cached_entity_classes[$classname]['columns'])) {
                 return self::$_cached_entity_classes[$classname]['columns'][$column];
             }
             return null;
@@ -1026,8 +954,7 @@
         public static function getCachedColumnPropertyName($classname, $column)
         {
             self::_populateCachedClassFiles($classname);
-            if (\array_key_exists($classname, self::$_cached_entity_classes) && \array_key_exists($column, self::$_cached_entity_classes[$classname]['columns']))
-            {
+            if (\array_key_exists($classname, self::$_cached_entity_classes) && \array_key_exists($column, self::$_cached_entity_classes[$classname]['columns'])) {
                 return self::$_cached_entity_classes[$classname]['columns'][$column]['property'];
             }
             return null;
@@ -1036,10 +963,8 @@
         public static function getCachedB2DBTableClass($classname)
         {
             self::_populateCachedClassFiles($classname);
-            if (\array_key_exists($classname, self::$_cached_entity_classes))
-            {
-                if (!\array_key_exists('table', self::$_cached_entity_classes[$classname]))
-                {
+            if (\array_key_exists($classname, self::$_cached_entity_classes)) {
+                if (!\array_key_exists('table', self::$_cached_entity_classes[$classname])) {
                     throw new Exception("The class '{$classname}' is missing a valid @Table annotation");
                 }
                 return self::$_cached_entity_classes[$classname]['table'];
@@ -1050,10 +975,8 @@
         public static function getCachedTableEntityClasses($classname)
         {
             self::_populateCachedTableClassFiles($classname);
-            if (\array_key_exists($classname, self::$_cached_table_classes))
-            {
-                if (\array_key_exists('entities', self::$_cached_table_classes[$classname]))
-                {
+            if (\array_key_exists($classname, self::$_cached_table_classes)) {
+                if (\array_key_exists('entities', self::$_cached_table_classes[$classname])) {
                     return self::$_cached_table_classes[$classname]['entities'];
                 }
             }
@@ -1063,10 +986,8 @@
         public static function getCachedTableEntityClass($classname)
         {
             self::_populateCachedTableClassFiles($classname);
-            if (\array_key_exists($classname, self::$_cached_table_classes))
-            {
-                if (!\array_key_exists('entity', self::$_cached_table_classes[$classname]))
-                {
+            if (\array_key_exists($classname, self::$_cached_table_classes)) {
+                if (!\array_key_exists('entity', self::$_cached_table_classes[$classname])) {
                     throw new Exception("The class '{$classname}' is missing a valid @Entity annotation");
                 }
                 return self::$_cached_table_classes[$classname]['entity'];

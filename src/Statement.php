@@ -18,7 +18,8 @@
      * @package b2db
      * @subpackage core
      */
-    class Statement {
+    class Statement
+    {
 
         /**
          * Current Criteria
@@ -33,9 +34,13 @@
          * @var \PDOStatement
          */
         public $statement;
+
         public $values = array();
+
         public $params = array();
+
         protected $insert_id = null;
+
         public $custom_sql = '';
 
         /**
@@ -45,7 +50,8 @@
          *
          * @return Statement
          */
-        public static function getPreparedStatement($crit) {
+        public static function getPreparedStatement($crit)
+        {
             try {
                 $statement = new Statement($crit);
             } catch (\Exception $e) {
@@ -55,7 +61,8 @@
             return $statement;
         }
 
-        public function __construct($crit) {
+        public function __construct($crit)
+        {
             try {
                 if ($crit instanceof Criteria)
                     $this->crit = $crit;
@@ -81,7 +88,8 @@
          *
          * @return Resultset
          */
-        public function performQuery() {
+        public function performQuery()
+        {
             try {
                 $values = ($this->getCriteria() instanceof Criteria) ? $this->getCriteria()->getValues() : array();
                 if (Core::isDebugMode()) {
@@ -95,10 +103,12 @@
 
                 if (!$res) {
                     $error = $this->statement->errorInfo();
-                    if (Core::isDebugMode()) Core::sqlHit($this, $pretime);
+                    if (Core::isDebugMode())
+                        Core::sqlHit($this, $pretime);
                     throw new Exception($error[2], $this->printSQL());
                 }
-                if (Core::isDebugLoggingEnabled()) \caspar\core\Logging::log('done', 'B2DB');
+                if (Core::isDebugLoggingEnabled())
+                    \caspar\core\Logging::log('done', 'B2DB');
 
                 if ($this->getCriteria() instanceof Criteria && $this->getCriteria()->action == 'insert') {
                     if (Core::getDBtype() == 'mysql') {
@@ -114,7 +124,8 @@
 
                 $retval = new Resultset($this);
 
-                if (Core::isDebugMode()) Core::sqlHit($this, $pretime);
+                if (Core::isDebugMode())
+                    Core::sqlHit($this, $pretime);
 
                 if (!$this->getCriteria() || $this->getCriteria()->action != 'select') {
                     $this->statement->closeCursor();
@@ -130,32 +141,37 @@
          *
          * @return Criteria
          */
-        public function getCriteria() {
+        public function getCriteria()
+        {
             return $this->crit;
         }
 
         /**
          * Return the ID for the inserted record
          */
-        public function getInsertID() {
+        public function getInsertID()
+        {
             return $this->insert_id;
         }
 
-        public function getColumnValuesForCurrentRow() {
+        public function getColumnValuesForCurrentRow()
+        {
             return $this->values;
         }
 
         /**
          * Return the number of affected rows
          */
-        public function getNumRows() {
+        public function getNumRows()
+        {
             return $this->statement->rowCount();
         }
 
         /**
          * Fetch the resultset
          */
-        public function fetch() {
+        public function fetch()
+        {
             try {
                 if ($this->values = $this->statement->fetch(\PDO::FETCH_ASSOC)) {
                     return $this->values;
@@ -170,7 +186,8 @@
         /**
          * Prepare the statement
          */
-        protected function _prepare() {
+        protected function _prepare()
+        {
             try {
                 if (!Core::getDBLink() instanceof \PDO) {
                     throw new Exception('Connection not up, can\'t prepare the statement');
@@ -185,11 +202,13 @@
             }
         }
 
-        public function resetPtr() {
+        public function resetPtr()
+        {
             $this->statement->reset();
         }
 
-        public function printSQL() {
+        public function printSQL()
+        {
             $str = '';
             if ($this->getCriteria() instanceof Criteria) {
                 $str .= $this->crit->getSQL();
