@@ -518,36 +518,25 @@
         public static function doConnect()
         {
             if (!\class_exists('\\PDO')) {
-                throw new B2DBException('B2DB needs the PDO PHP libraries installed. See http://php.net/PDO for more information.');
+                throw new Exception('B2DB needs the PDO PHP libraries installed. See http://php.net/PDO for more information.');
             }
             try {
                 $uname = self::getUname();
                 $pwd = self::getPasswd();
+                $dsn = self::getDSN();
                 if (self::$_db_connection instanceof PDO) {
                     self::$_db_connection = null;
                 }
-                $dsn = self::getDSN();
                 self::$_db_connection = new PDO($dsn, $uname, $pwd);
                 if (!self::$_db_connection instanceof PDO) {
                     throw new Exception('Could not connect to the database, but not caught by PDO');
                 }
                 self::getDBLink()->query('SET NAMES UTF8');
             } catch (PDOException $e) {
-                throw new Exception("Could not connect to the database [" . $e->getMessage() . "], dsn: {$dsn}");
+                throw new Exception("Could not connect to the database [" . $e->getMessage() . "], dsn: ".self::getDSN());
             } catch (Exception $e) {
                 throw $e;
             }
-        }
-
-        /**
-         * Select a database to use
-         *
-         * @param string $db
-         * @deprecated
-         */
-        public static function doSelectDB($db = null)
-        {
-            return true;
         }
 
         /**
@@ -557,7 +546,7 @@
          */
         public static function createDatabase($db_name)
         {
-            $res = self::getDBLink()->query('create database ' . $db_name);
+            self::getDBLink()->query('create database ' . $db_name);
         }
 
         /**
@@ -731,32 +720,35 @@
                     $property_name = $property->getName();
                     if ($column_annotation = $annotationset->getAnnotation('Column')) {
                         $column_name = $column_prefix . (($column_annotation->hasProperty('name')) ? $column_annotation->getProperty('name') : substr($property_name, 1));
-                        $column = array('property' => $property_name, 'default_value' => (($column_annotation->hasProperty('default_value')) ? $column_annotation->getProperty('default_value') : null), 'not_null' => (($column_annotation->hasProperty('not_null')) ? $column_annotation->getProperty('not_null') : false), 'name' => $column_name, 'type' => $column_annotation->getProperty('type'));
+
+                        $column = array('property' => $property_name, 'name' => $column_name, 'type' => $column_annotation->getProperty('type'));
+
+                        $column['not_null'] = ($column_annotation->hasProperty('not_null')) ? $column_annotation->getProperty('not_null') : false;
+
+                        if ($column_annotation->hasProperty('default_value')) $column['default_value'] = $column_annotation->getProperty('default_value');
+                        if ($column_annotation->hasProperty('length')) $column['length'] = $column_annotation->getProperty('length');
+
                         switch ($column['type']) {
                             case 'serializable':
                                 $column['type'] = 'serializable';
-                                $column['length'] = ($column_annotation->hasProperty('length')) ? $column_annotation->getProperty('length') : null;
                                 break;
                             case 'varchar':
                             case 'string':
                                 $column['type'] = 'varchar';
-                                $column['length'] = ($column_annotation->hasProperty('length')) ? $column_annotation->getProperty('length') : null;
                                 break;
                             case 'float':
                                 $column['precision'] = ($column_annotation->hasProperty('precision')) ? $column_annotation->getProperty('precision') : 2;
                             case 'integer':
                                 $column['auto_inc'] = ($column_annotation->hasProperty('auto_increment')) ? $column_annotation->getProperty('auto_increment') : false;
                                 $column['unsigned'] = ($column_annotation->hasProperty('unsigned')) ? $column_annotation->getProperty('unsigned') : false;
-                                $column['length'] = ($column_annotation->hasProperty('length')) ? $column_annotation->getProperty('length') : 10;
-                                if ($column['type'] != 'float') {
-                                    $column['default_value'] = ($column_annotation->hasProperty('default_value')) ? $column_annotation->getProperty('default_value') : 0;
-                                }
+                                if (!isset($column['length'])) $column['length'] = 10;
+                                if ($column['type'] != 'float'&& !isset($column['default_value'])) $column['default_value'] = 0;
                                 break;
                         }
                         self::$_cached_entity_classes[$classname]['columns'][$column_name] = $column;
-                    }
-                    if ($annotation = $annotationset->getAnnotation('Id')) {
-                        self::$_cached_entity_classes[$classname]['id_column'] = $column_name;
+                        if ($annotationset->hasAnnotation('Id')) {
+                            self::$_cached_entity_classes[$classname]['id_column'] = $column_name;
+                        }
                     }
                     if ($annotation = $annotationset->getAnnotation('Relates')) {
                         $value = $annotation->getProperty('class');
@@ -842,66 +834,63 @@
             return null;
         }
 
-        public static function getCachedEntityRelationDetails($classname, $property)
+        protected static function _getCachedEntityDetail($classname, $key, $detail = null)
         {
             self::_populateCachedClassFiles($classname);
-            if (array_key_exists($classname, self::$_cached_entity_classes) && array_key_exists($property, self::$_cached_entity_classes[$classname]['relations'])) {
-                return self::$_cached_entity_classes[$classname]['relations'][$property];
+            if (array_key_exists($classname, self::$_cached_entity_classes)) {
+                if (!array_key_exists($key, self::$_cached_entity_classes[$classname])) {
+                    if ($key == 'table') throw new Exception("The class '{$classname}' is missing a valid @Table annotation");
+                } elseif ($detail === null) {
+                    return self::$_cached_entity_classes[$classname][$key];
+                } else {
+                    return self::$_cached_entity_classes[$classname][$key][$detail];
+                }
             }
             return null;
+        }
+
+        protected static function _getCachedTableDetail($classname, $detail)
+        {
+            self::_populateCachedTableClassFiles($classname);
+            if (array_key_exists($classname, self::$_cached_table_classes)) {
+                if (!array_key_exists($detail, self::$_cached_table_classes[$classname])) {
+                    if ($detail == 'entity') throw new Exception("The class '{$classname}' is missing a valid @Entity annotation");
+                } else {
+                    return self::$_cached_table_classes[$classname][$detail];
+                }
+            }
+            return null;
+        }
+
+        public static function getCachedEntityRelationDetails($classname, $property)
+        {
+            return self::_getCachedEntityDetail($classname, 'relations', $property);
         }
 
         public static function getCachedColumnDetails($classname, $column)
         {
-            self::_populateCachedClassFiles($classname);
-            if (array_key_exists($classname, self::$_cached_entity_classes) && array_key_exists($column, self::$_cached_entity_classes[$classname]['columns'])) {
-                return self::$_cached_entity_classes[$classname]['columns'][$column];
-            }
-            return null;
+            return self::_getCachedEntityDetail($classname, 'columns', $column);
         }
 
         public static function getCachedColumnPropertyName($classname, $column)
         {
-            self::_populateCachedClassFiles($classname);
-            if (array_key_exists($classname, self::$_cached_entity_classes) && array_key_exists($column, self::$_cached_entity_classes[$classname]['columns'])) {
-                return self::$_cached_entity_classes[$classname]['columns'][$column]['property'];
-            }
-            return null;
+            $column_details = self::getCachedColumnDetails($classname, $column);
+            return (is_array($column_details)) ? $column_details['property'] : null;
         }
 
         public static function getCachedB2DBTableClass($classname)
         {
-            self::_populateCachedClassFiles($classname);
-            if (array_key_exists($classname, self::$_cached_entity_classes)) {
-                if (!\array_key_exists('table', self::$_cached_entity_classes[$classname])) {
-                    throw new Exception("The class '{$classname}' is missing a valid @Table annotation");
-                }
-                return self::$_cached_entity_classes[$classname]['table'];
-            }
-            return null;
+            return self::_getCachedEntityDetail($classname, 'table');
         }
 
         public static function getCachedTableEntityClasses($classname)
         {
-            self::_populateCachedTableClassFiles($classname);
-            if (array_key_exists($classname, self::$_cached_table_classes)) {
-                if (array_key_exists('entities', self::$_cached_table_classes[$classname])) {
-                    return self::$_cached_table_classes[$classname]['entities'];
-                }
-            }
-            return null;
+            return self::_getCachedTableDetail($classname, 'entities');
         }
 
         public static function getCachedTableEntityClass($classname)
         {
-            self::_populateCachedTableClassFiles($classname);
-            if (array_key_exists($classname, self::$_cached_table_classes)) {
-                if (!\array_key_exists('entity', self::$_cached_table_classes[$classname])) {
-                    throw new Exception("The class '{$classname}' is missing a valid @Entity annotation");
-                }
-                return self::$_cached_table_classes[$classname]['entity'];
-            }
-            return null;
+            return self::_getCachedTableDetail($classname, 'entity');
         }
 
     }
