@@ -124,11 +124,6 @@
             return $this->rows;
         }
 
-        public function resetPtr()
-        {
-            $this->int_ptr = 0;
-        }
-
         public function getSQL()
         {
             return ($this->crit instanceof Criteria) ? $this->crit->getSQL() : '';
@@ -156,7 +151,7 @@
 
         public function rewind()
         {
-            $this->resetPtr();
+            $this->int_ptr = 0;
         }
 
         public function current()

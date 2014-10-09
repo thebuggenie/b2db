@@ -103,8 +103,9 @@
 
                 if (!$res) {
                     $error = $this->statement->errorInfo();
-                    if (Core::isDebugMode())
+                    if (Core::isDebugMode()) {
                         Core::sqlHit($this, $pretime);
+                    }
                     throw new Exception($error[2], $this->printSQL());
                 }
                 if (Core::isDebugLoggingEnabled())
@@ -202,22 +203,15 @@
             }
         }
 
-        public function resetPtr()
-        {
-            $this->statement->reset();
-        }
-
         public function printSQL()
         {
             $str = '';
             if ($this->getCriteria() instanceof Criteria) {
                 $str .= $this->crit->getSQL();
                 foreach ($this->crit->getValues() as $val) {
-                    if (is_int($val)) {
-                        $val = $val;
-                    } elseif (is_null($val)) {
+                    if (is_null($val)) {
                         $val = 'null';
-                    } else {
+                    } elseif (!is_int($val)) {
                         $val = '\'' . $val . '\'';
                     }
                     $str = substr_replace($str, $val, mb_strpos($str, '?'), 1);
