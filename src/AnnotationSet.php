@@ -12,7 +12,6 @@
         public function __construct($docblock)
         {
             $current_annotation = null;
-            $current_annotation_data = null;
             $dblen = strlen($docblock);
             $annotations = array();
             for ($i = 0; $i < $dblen; $i++) {
@@ -47,7 +46,6 @@
                             $annotations[$current_annotation] = new Annotation($current_annotation, $current_annotation_data);
                         }
                         $current_annotation = null;
-                        $current_annotation_data = null;
                     }
                 }
             }
