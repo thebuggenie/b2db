@@ -94,7 +94,7 @@
          * Advances through the resultset and returns the current row
          * Returns false when there are no more rows
          *
-         * @return Row
+         * @return Row|false
          */
         public function getNextRow()
         {
