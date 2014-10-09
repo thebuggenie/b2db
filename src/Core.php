@@ -306,8 +306,8 @@
          */
         public static function setDSN($dsn)
         {
-            $dsn_details = \parse_url($dsn);
-            if (!\array_key_exists('scheme', $dsn_details)) {
+            $dsn_details = parse_url($dsn);
+            if ($dsn === false || !array_key_exists('scheme', $dsn_details)) {
                 throw new Exception('This does not look like a valid DSN - cannot read the database type');
             }
             try {
