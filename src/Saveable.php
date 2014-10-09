@@ -69,7 +69,7 @@
                 } elseif (array_key_exists('joinclass', $relation_details) && $relation_details['joinclass']) {
                     $table = $relation_details['joinclass'];
                 }
-                $items = $table::getTable()->getForeignItems($this, $relation_details);
+                $items = (isset($table)) ? $table::getTable()->getForeignItems($this, $relation_details) : null;
                 $value = ($items !== null) ? $items : array();
                 $this->$property = $value;
             } elseif (is_numeric($this->$property) && $this->$property > 0) {
@@ -94,13 +94,12 @@
         protected function _populatePropertiesFromRow(\b2db\Row $row, $traverse = true, $foreign_key = null)
         {
             $table = self::getB2DBTable();
-            $table_name = $table->getB2DBName();
             $id_column = $table->getIdColumn();
             $this_class = \get_class($this);
             foreach ($table->getColumns() as $column) {
-                if ($column['name'] == $id_column)
-                    continue;
-                $property_name = $column['property']; //Core::getCachedColumnClassProperty($this_class, $column['name']);
+                if ($column['name'] == $id_column) continue;
+
+                $property_name = $column['property'];
                 $property_type = $column['type'];
                 if (!property_exists($this, $property_name)) {
                     throw new \Exception("Could not find class property {$property_name} in class " . $this_class . ". The class must have all properties from the corresponding B2DB table class available");
@@ -109,8 +108,6 @@
                     if ($row->get($column['name']) > 0) {
                         $relation_details = Core::getCachedEntityRelationDetails($this_class, $property_name);
                         if ($relation_details && class_exists($relation_details['class'])) {
-                            $b2dbtablename = Core::getCachedB2DBTableClass($relation_details['class']);
-                            $b2dbtable = $b2dbtablename::getTable();
                             foreach ($row->getJoinedTables() as $join_details) {
                                 if ($join_details['original_column'] == $column['name']) {
                                     $property_type = 'class';
@@ -126,6 +123,8 @@
                         break;
                     case 'class':
                         $value = (int) $row->get($column['name']);
+                        $relation_details = Core::getCachedEntityRelationDetails($this_class, $property_name);
+                        $type_name = $relation_details['class'];
                         $this->$property_name = new $type_name($value, $row, false, $column['name']);
                         break;
                     case 'boolean':
@@ -289,11 +288,8 @@
 
         final public function getB2DBMorphedDataArray()
         {
-            $table = self::getB2DBTable();
-            $table_name = $table->getB2DBName();
-            $id_column = $table->getIdColumn();
             $data = array();
-            foreach ($table->getColumns() as $column) {
+            foreach (self::getB2DBTable()->getColumns() as $column) {
                 $property_name = $column['property'];
                 $data[$property_name] = $this->$property_name;
             }
@@ -306,7 +302,6 @@
             $this->_preMorph();
             $data = $original_object->getB2DBMorphedDataArray();
             $table = self::getB2DBTable();
-            $table_name = $table->getB2DBName();
             $id_column = $table->getIdColumn();
             foreach ($table->getColumns() as $column) {
                 if (!$keep_id && $column['name'] == $id_column)
