@@ -90,8 +90,7 @@
 
         public function offsetExists($offset)
         {
-            $column = $this->_getColumnName($column, $foreign_key);
-
+            $column = $this->_getColumnName($offset);
             return (bool) array_key_exists($this->_statement->getCriteria()->getSelectionAlias($column), $this->_fields);
         }
 
