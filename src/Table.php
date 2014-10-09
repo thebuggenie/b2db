@@ -515,9 +515,7 @@
             $crit->addWhere($this->id_column, $id);
             $crit->generateDeleteSQL();
 
-            $statement = Statement::getPreparedStatement($crit);
-
-            return $statement->performQuery();
+            return Statement::getPreparedStatement($crit)->performQuery();
         }
 
         /**
@@ -527,13 +525,10 @@
          */
         public function create()
         {
-            $sql = '';
+            $sql = $this->_createToSQL();
             try {
-                $res = $this->drop();
-
-                $sql = $this->_createToSQL();
-                $statement = Statement::getPreparedStatement($sql);
-                return $statement->performQuery();
+                $this->drop();
+                return Statement::getPreparedStatement($sql)->performQuery();
             } catch (\Exception $e) {
                 throw new Exception('Error creating table ' . $this->getB2DBName() . ': ' . $e->getMessage(), $sql);
             }
@@ -551,24 +546,22 @@
                 $qc = $this->getQC();
 
                 foreach ($this->_indexes as $index_name => $details) {
-                    $sql = '';
-                    switch (Core::getDBtype()) {
-                        case 'pgsql':
-                            $sql .= " CREATE INDEX " . Core::getTablePrefix() . $this->b2db_name . "_{$index_name} ON " . $this->_getTableNameSQL() . " (";
-                            break;
-                        case 'mysql':
-                            $sql .= " ALTER TABLE " . $this->_getTableNameSQL() . " ADD INDEX " . Core::getTablePrefix() . $this->b2db_name . "_{$index_name}(";
-                            break;
-                    }
                     $index_column_sqls = array();
                     foreach ($details['columns'] as $column) {
-                        $index_column_sqls[] = "$qc" . $this->_getRealColumnFieldName($column) . "$qc";
+                        $index_column_sqls[] = $qc . $this->_getRealColumnFieldName($column) . $qc;
                     }
-                    $sql .= join(', ', $index_column_sqls);
-                    $sql .= ");";
+                    switch (Core::getDBtype()) {
+                        case 'pgsql':
+                            $sql = " CREATE INDEX " . Core::getTablePrefix() . $this->b2db_name . "_{$index_name} ON " . $this->_getTableNameSQL() . " (".join(', ', $index_column_sqls).')';
+                            break;
+                        case 'mysql':
+                            $sql = " ALTER TABLE " . $this->_getTableNameSQL() . " ADD INDEX " . Core::getTablePrefix() . $this->b2db_name . "_{$index_name} (".join(', ', $index_column_sqls).')';
+                            break;
+                    }
 
-                    $statement = Statement::getPreparedStatement($sql);
-                    $res = $statement->performQuery();
+                    if (isset($sql)) {
+                        Statement::getPreparedStatement($sql)->performQuery();
+                    }
                 }
             } catch (Exception $e) {
                 throw new Exception('An error occured when trying to create indexes for table "' . $this->getB2DBName() . '" (defined in "' . \get_class($this) . ')": ' . $e->getMessage(), $e->getSQL());
@@ -615,7 +608,14 @@
                 case 'serializable':
                     return serialize($value);
                 case 'float':
-                    return ($value) ? \settype(\gmp_strval($value)) : $value;
+                    if ($value) {
+                        $tempval = gmp_strval($value);
+                        settype($tempval, 'float');
+
+                        return $tempval;
+                    } else {
+                        return $value;
+                    }
                 case 'varchar':
                 case 'text':
                     return (string) $value;
@@ -656,7 +656,7 @@
             }
             if ($id) {
                 if ($changed) {
-                    $res = $this->doUpdateById($crit, $id);
+                    $this->doUpdateById($crit, $id);
                 }
                 $res_id = $id;
             } else {
@@ -757,7 +757,7 @@
             return $sql;
         }
 
-        protected function _getAddColumnSQL($column, $details)
+        protected function _getAddColumnSQL($details)
         {
             $qc = $this->getQC();
 
@@ -767,7 +767,7 @@
             return $sql;
         }
 
-        protected function _getAlterColumnSQL($column, $details)
+        protected function _getAlterColumnSQL($details)
         {
             $sql = 'ALTER TABLE ' . $this->_getTableNameSQL();
             $qc = $this->getQC();
@@ -813,13 +813,12 @@
             $dropped_columns = \array_keys(array_diff_key($old_columns, $new_columns));
 
             $sqls = array();
-            foreach ($added_columns as $column => $details) {
-                $sqls[] = $this->_getAddColumnSQL($column, $details);
+            foreach ($added_columns as $details) {
+                $sqls[] = $this->_getAddColumnSQL($details);
             }
             if (count($sqls)) {
                 foreach ($sqls as $sqlStmt) {
-                    $statement = Statement::getPreparedStatement($sqlStmt);
-                    $res = $statement->performQuery();
+                    Statement::getPreparedStatement($sqlStmt)->performQuery();
                 }
             }
 
@@ -827,17 +826,16 @@
 
             $sqls = array();
             foreach ($altered_columns as $column => $details) {
-                if (in_array($column, $dropped_columns))
-                    continue;
-                $sqls[] = $this->_getAlterColumnSQL($column, $new_columns[$column]);
+                if (in_array($column, $dropped_columns)) continue;
+
+                $sqls[] = $this->_getAlterColumnSQL($new_columns[$column]);
             }
             foreach ($dropped_columns as $details) {
                 $sqls[] = $this->_getDropColumnSQL($details);
             }
             if (count($sqls)) {
                 foreach ($sqls as $sqlStmt) {
-                    $statement = Statement::getPreparedStatement($sqlStmt);
-                    $res = $statement->performQuery();
+                    Statement::getPreparedStatement($sqlStmt)->performQuery();
                 }
             }
         }
@@ -962,7 +960,7 @@
 
         public function countForeignItems(Saveable $class, $relation_details)
         {
-            list ($criteria, $item_class, $item_column) = $this->generateForeignItemsCriteria($class, $relation_details);
+            list ($criteria,,) = $this->generateForeignItemsCriteria($class, $relation_details);
             $result = $this->doCount($criteria);
             return $result;
         }

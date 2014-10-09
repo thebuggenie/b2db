@@ -46,7 +46,7 @@
         /**
          * Returns a statement
          *
-         * @param Criteria $crit
+         * @param string|Criteria $crit
          *
          * @return Statement
          */

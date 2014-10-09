@@ -200,7 +200,7 @@
         /**
          * Returns the Table object
          *
-         * @param Table $tbl_name
+         * @param string $tbl_name The table class name to load
          *
          * @return Table
          */

@@ -70,7 +70,7 @@
                     $this->state = self::DB_TRANSACTION_COMMITED;
                     Core::setTransaction(false);
                 } else {
-                    throw new Exception('Error committing transaction: ' . Core::getDBLink()->error);
+                    throw new Exception('Error committing transaction: ' . join(', ', Core::getDBLink()->errorInfo()));
                 }
             } else {
                 throw new Exception('There is no active transaction');
@@ -84,7 +84,7 @@
                     $this->state = self::DB_TRANSACTION_ROLLEDBACK;
                     Core::setTransaction(false);
                 } else {
-                    throw new Exception('Error rolling back transaction: ' . Core::getDBLink()->error);
+                    throw new Exception('Error rolling back transaction: ' . join(', ', Core::getDBLink()->errorInfo()));
                 }
             } else {
                 throw new Exception('There is no active transaction');
