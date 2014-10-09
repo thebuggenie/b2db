@@ -760,7 +760,7 @@
                         $f_column = $annotation->getProperty('column');
                         self::$_cached_entity_classes[$classname]['relations'][$property_name] = array('collection' => $collection, 'property' => $property_name, 'foreign_column' => $foreign_column, 'manytomany' => $manytomany, 'joinclass' => $joinclass, 'class' => $annotation->getProperty('class'), 'column' => $f_column, 'orderby' => $orderby);
                         if (!$collection) {
-                            if (!$column_annotation) {
+                            if (!$column_annotation || !isset($column)) {
                                 throw new Exception("The property '{$property_name}' in class '{$classname}' is missing an @Column annotation, or is improperly marked as not being a collection");
                             }
                             $column_name = $column_prefix . (($annotation->hasProperty('name')) ? $annotation->getProperty('name') : substr($property_name, 1));
