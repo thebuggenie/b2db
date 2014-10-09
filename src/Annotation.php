@@ -30,7 +30,7 @@
                             $value = (integer) $ad_info[1];
                             break;
                         case (defined($ad_info[1])):
-                            $value = array('type' => 'constant', 'value' => $value);
+                            $value = array('type' => 'constant', 'value' => $ad_info[1]);
                             break;
                         default:
                             $value = trim($ad_info[1]);
