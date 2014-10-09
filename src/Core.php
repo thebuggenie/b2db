@@ -53,8 +53,6 @@
 
         protected static $_sqltiming;
 
-        protected static $_throwhtmlexception = true;
-
         protected static $_aliascnt = 0;
 
         protected static $_transaction_active = false;
@@ -605,105 +603,6 @@
         public static function isTransactionActive()
         {
             return (bool) self::$_transaction_active == Transaction::STATE_STARTED;
-        }
-
-        /**
-         * Displays a nicely formatted exception message
-         *
-         * @param Exception $exception
-         */
-        public static function fatalError(\Exception $exception)
-        {
-            $ob_status = ob_get_status();
-            if (!empty($ob_status) && $ob_status['status'] != PHP_OUTPUT_HANDLER_END) {
-                ob_end_clean();
-            }
-            if (self::$_throwhtmlexception) {
-                echo "
-				<style>
-				body { background-color: #DFDFDF; font-family: \"Droid Sans\", \"Trebuchet MS\", \"Liberation Sans\", \"Nimbus Sans L\", \"Luxi Sans\", Verdana, sans-serif; font-size: 13px; }
-				h1 { margin: 5px 0 15px 0; font-size: 18px; }
-				h2 { margin: 15px 0 0 0; font-size: 15px; }
-				.rounded_box {background: transparent; margin:0px;}
-				.rounded_box h4 { margin-bottom: 0px; margin-top: 7px; font-size: 14px; }
-				.xtop, .xbottom {display:block; background:transparent; font-size:1px;}
-				.xb1, .xb2, .xb3, .xb4 {display:block; overflow:hidden;}
-				.xb1, .xb2, .xb3 {height:1px;}
-				.xb2, .xb3, .xb4 {background:#F9F9F9; border-left:1px solid #CCC; border-right:1px solid #CCC;}
-				.xb1 {margin:0 5px; background:#CCC;}
-				.xb2 {margin:0 3px; border-width:0 2px;}
-				.xb3 {margin:0 2px;}
-				.xb4 {height:2px; margin:0 1px;}
-				.xboxcontent {display:block; background:#F9F9F9; border:0 solid #CCC; border-width:0 1px; padding: 0 5px 0 5px;}
-				.xboxcontent table td.description { padding: 3px 3px 3px 0;}
-				.white .xb2, .white .xb3, .white .xb4 { background: #FFF; border-color: #CCC; }
-				.white .xb1 { background: #CCC; }
-				.white .xboxcontent { background: #FFF; border-color: #CCC; }
-				</style>
-				<div class=\"rounded_box white\" style=\"margin: 30px auto 0 auto; width: 600px;\">
-					<b class=\"xtop\"><b class=\"xb1\"></b><b class=\"xb2\"></b><b class=\"xb3\"></b><b class=\"xb4\"></b></b>
-					<div class=\"xboxcontent\" style=\"vertical-align: middle; padding: 10px 10px 10px 15px;\">
-					<h1>An error occured in the B2DB database framework</h1>
-					<h2>The following error occured:</h2>
-					<i>" . $exception->getMessage() . "</i><br>
-					";
-                if ($exception->getSQL()) {
-                    echo "<h2>SQL was:</h2>";
-                    echo $exception->getSQL();
-                    echo '<br>';
-                }
-                echo "<h2>Stack trace:</h2>
-					<ul>";
-                foreach ($exception->getTrace() as $trace_element) {
-                    echo '<li>';
-                    if (array_key_exists('class', $trace_element)) {
-                        echo '<strong>' . $trace_element['class'] . $trace_element['type'] . $trace_element['function'] . '()</strong><br>';
-                    } elseif (array_key_exists('function', $trace_element)) {
-                        echo '<strong>' . $trace_element['function'] . '()</strong><br>';
-                    } else {
-                        echo '<strong>unknown function</strong><br>';
-                    }
-                    if (array_key_exists('file', $trace_element)) {
-                        echo '<span style="color: #55F;">' . $trace_element['file'] . '</span>, line ' . $trace_element['line'];
-                    } else {
-                        echo '<span style="color: #C95;">unknown file</span>';
-                    }
-                    echo '</li>';
-                }
-                echo "
-					</ul></div>
-					<b class=\"xbottom\"><b class=\"xb4\"></b><b class=\"xb3\"></b><b class=\"xb2\"></b><b class=\"xb1\"></b></b>
-				</div>
-				";
-            } else {
-                echo "B2DB error\n";
-                echo 'The following error occurred in ' . $e->getFile() . ' at line ' . $e->getLine() . ":\n";
-                echo $e->getMessage() . "\n\n";
-                echo "Trace:\n";
-                echo $e->getTraceAsString() . "\n\n";
-                echo self::$_db_connection->error . "\n\n";
-                echo "For more information, refer to the B2DB manual.\n";
-            }
-        }
-
-        /**
-         * Toggle HTML exception messages
-         *
-         * @param boolean $active
-         */
-        public static function setHTMLException($active)
-        {
-            self::$_throwhtmlexception = $active;
-        }
-
-        /**
-         * Return whether exceptions are thrown and displayed as HTML
-         *
-         * @return boolean
-         */
-        public static function throwExceptionAsHTML()
-        {
-            return self::$_throwhtmlexception;
         }
 
         /**
