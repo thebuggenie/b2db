@@ -15,7 +15,6 @@
 
             $this->_data = array();
             $ad = explode(',', $annotation_data);
-            $ad_size = count($ad);
             foreach ($ad as $a_item) {
                 $ad_info = explode('=', $a_item);
                 if (array_key_exists(1, $ad_info)) {
