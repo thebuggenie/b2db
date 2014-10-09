@@ -315,7 +315,7 @@
         {
             $column_details = explode('.', $column);
             $table_alias = $column_details[0];
-            $column = $column_details[1];
+            $column_name = $column_details[1];
             if ($table_alias == $this->fromtable->getB2DBAlias() || $table_alias == $this->fromtable->getB2DBName()) {
                 $real_table_name = $this->fromtable->getB2DBName();
             } else {
@@ -326,7 +326,12 @@
                     }
                 }
             }
-            return "{$real_table_name}.{$column}";
+
+            if (!isset($real_table_name)) {
+                throw new Exception("Could not find the real column name for column {$column}. Check that all relevant tables are joined.");
+            }
+
+            return "{$real_table_name}.{$column_name}";
         }
 
         public function indexBy($column)
@@ -347,10 +352,8 @@
         protected function _generateSelectAllSQL()
         {
             $sqls = array();
-            foreach ($this->getSelectionColumns() as $column_name => $column_data) {
-                $str = '';
-                $str = $column_data['column'] . ' AS ' . $this->getSelectionAlias($column_data['column']);
-                $sqls[] = $str;
+            foreach ($this->getSelectionColumns() as $column_data) {
+                $sqls[] = $column_data['column'] . ' AS ' . $this->getSelectionAlias($column_data['column']);
             }
             return join(', ', $sqls);
         }
@@ -427,27 +430,27 @@
          */
         public function getSelectionColumn($column, $join_column = null, $throw_exceptions = true)
         {
-            if (isset($this->selections[$column]))
+            if (isset($this->selections[$column])) {
                 return $this->selections[$column];
-            $retval = '';
+            }
+
             foreach ($this->selections as $a_sel) {
                 if ($a_sel['alias'] == $column) {
                     return $column;
                 }
             }
+
             list($table_name, $column_name) = explode('.', $column);
             if ($join_column === null) {
                 if ($this->fromtable->getB2DBAlias() == $table_name || $this->fromtable->getB2DBName() == $table_name) {
-                    $retval = $this->fromtable->getB2DBAlias() . '.' . $column_name;
-                    return $retval;
-                }
-                if (isset($this->jointables[$table_name]))
+                    return $this->fromtable->getB2DBAlias() . '.' . $column_name;
+                } elseif (isset($this->jointables[$table_name])) {
                     return $this->jointables[$table_name]['jointable']->getB2DBAlias() . '.' . $column_name;
+                }
             }
             foreach ($this->jointables as $a_table) {
                 if (($join_column !== null && $a_table['col2'] == $join_column) || ($join_column === null && $a_table['jointable']->getB2DBName() == $table_name)) {
-                    $retval = $a_table['jointable']->getB2DBAlias() . '.' . $column_name;
-                    return $retval;
+                    return $a_table['jointable']->getB2DBAlias() . '.' . $column_name;
                 }
             }
 
