@@ -305,14 +305,14 @@
         public static function setDSN($dsn)
         {
             $dsn_details = parse_url($dsn);
-            if ($dsn === false || !array_key_exists('scheme', $dsn_details)) {
+            if (!is_array($dsn_details) || !array_key_exists('scheme', $dsn_details)) {
                 throw new Exception('This does not look like a valid DSN - cannot read the database type');
             }
             try {
                 self::setDBtype($dsn_details['scheme']);
-                $dsn_details = explode(';', $dsn_details['path']);
-                foreach ($dsn_details as $dsn_detail) {
-                    $detail_info = explode('=', $dsn_detail);
+                $details = explode(';', $dsn_details['path']);
+                foreach ($details as $detail) {
+                    $detail_info = explode('=', $detail);
                     if (count($detail_info) != 2) {
                         throw new B2DBException('This does not look like a valid DSN - cannot read the connection details');
                     }
@@ -645,6 +645,13 @@
             return array_key_exists($driver, self::getDBtypes());
         }
 
+        protected static function storeCachedTableClass($classname)
+        {
+            $key = 'b2db_cache_' . $classname;
+            self::$_cache_object->add($key, self::$_cached_table_classes[$classname]);
+            self::$_cache_object->fileAdd($key, self::$_cached_table_classes[$classname]);
+        }
+
         protected static function cacheTableClass($classname)
         {
             if (!\class_exists($classname)) {
@@ -679,11 +686,14 @@
 
             self::$_cached_table_classes[$classname]['name'] = $table_name;
 
+            if (!self::$_debug_mode) self::storeCachedTableClass($classname);
+        }
+
+        protected static function storeCachedEntityClass($classname)
+        {
             $key = 'b2db_cache_' . $classname;
-            if (!self::$_debug_mode) {
-                self::$_cache_object->add($key, self::$_cached_table_classes[$classname]);
-                self::$_cache_object->fileAdd($key, self::$_cached_table_classes[$classname]);
-            }
+            self::$_cache_object->add($key, self::$_cached_entity_classes[$classname]);
+            self::$_cache_object->fileAdd($key, self::$_cached_entity_classes[$classname]);
         }
 
         protected static function cacheEntityClass($classname, $reflection_classname = null)
@@ -716,8 +726,6 @@
             $column_prefix = self::$_cached_table_classes[self::$_cached_entity_classes[$classname]['table']]['name'] . '.';
 
             foreach ($reflection->getProperties() as $property) {
-                if ($property instanceof ReflectionProperty)
-                    ;
                 $annotationset = new AnnotationSet($property->getDocComment());
                 if ($annotationset->hasAnnotations()) {
                     $property_name = $property->getName();
@@ -771,11 +779,8 @@
                     }
                 }
             }
-            $key = 'b2db_cache_' . $classname;
-            if (!self::$_debug_mode) {
-                self::$_cache_object->add($key, self::$_cached_entity_classes[$classname]);
-                self::$_cache_object->fileAdd($key, self::$_cached_entity_classes[$classname]);
-            }
+
+            if (!self::$_debug_mode) self::storeCachedEntityClass($classname);
         }
 
         protected static function _populateCachedClassFiles($classname)
