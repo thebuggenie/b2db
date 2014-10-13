@@ -183,8 +183,8 @@
         {
             $string = "b2db:\n";
             $string .= "    username: " . self::getUname() . "\n";
-            $string .= "    password: " . self::getPasswd() . "\n";
-            $string .= '    dsn: ' . self::getDSN() . "\n";
+            $string .= "    password: \"" . self::getPasswd() . "\"\n";
+            $string .= '    dsn: \"' . self::getDSN() . "\"\n";
             $string .= "    tableprefix: '" . self::getTablePrefix() . "'\n";
             $string .= "    cacheclass: 'TBGCache'\n";
             $string .= "\n";
