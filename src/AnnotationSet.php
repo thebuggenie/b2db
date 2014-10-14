@@ -11,6 +11,7 @@
 
         public function __construct($docblock)
         {
+            $docblock = str_replace("\r\n", "\n", $docblock);
             $current_annotation = null;
             $dblen = strlen($docblock);
             $annotations = array();
@@ -42,6 +43,7 @@
                                 $i++;
                             }
                         }
+                        $current_annotation = trim($current_annotation);
                         if (!in_array($current_annotation, self::$_ignored_annotations)) {
                             $annotations[$current_annotation] = new Annotation($current_annotation, $current_annotation_data);
                         }
