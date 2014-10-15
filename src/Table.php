@@ -650,7 +650,7 @@
                 if ($id) {
                     $changed = true;
                     $crit->addUpdate($column['name'], $value);
-                } elseif ($column != $this->getIdColumn()) {
+                } elseif ($column['name'] != $this->getIdColumn()) {
                     $crit->addInsert($column['name'], $value);
                 }
             }
