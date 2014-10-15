@@ -1,20 +1,21 @@
 {
-	"name" : "thebuggenie/b2db",
-	"description" : "B2DB is a lightweight PHP 5.3-based ORM",
-	"authors" : [{
-			"name" : "Daniel Andre Eikeland",
-			"email" : "zegenie@gmail.com"
-		}
-	],
-	"license" : [
-		"MPL 1.1"
-	],
-	"require" : {
-		"php" : ">=5.3.0"
-	},
-	"autoload" : {
-		"psr-4" : {
-			"b2db\\" : "src/"
-		}
-	}
+    "name" : "thebuggenie/b2db",
+    "description" : "B2DB is a lightweight PHP 5.3-based ORM",
+    "authors" : [{
+            "name" : "Daniel Andre Eikeland",
+            "email" : "zegenie@gmail.com"
+        }
+    ],
+    "license" : [
+        "MPL 1.1"
+    ],
+    "require" : {
+        "php" : ">=5.3.0",
+        "ext-Reflection" : "*"
+    },
+    "autoload" : {
+        "psr-4" : {
+            "b2db\\" : "src/"
+        }
+    }
 }
