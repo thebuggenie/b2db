@@ -842,7 +842,7 @@
                     if ($key == 'table') throw new Exception("The class '{$classname}' is missing a valid @Table annotation");
                 } elseif ($detail === null) {
                     return self::$_cached_entity_classes[$classname][$key];
-                } else {
+                } elseif (isset(self::$_cached_entity_classes[$classname][$key][$detail])) {
                     return self::$_cached_entity_classes[$classname][$key][$detail];
                 }
             }
