@@ -851,6 +851,8 @@
 
             if (is_null($part['value']) && !in_array($part['operator'], array(self::DB_IS_NOT_NULL, self::DB_IS_NULL))) {
                 $part['operator'] = ($part['operator'] == self::DB_EQUALS) ? self::DB_IS_NULL : self::DB_IS_NOT_NULL;
+            } elseif (is_array($part['value'])) {
+                $part['operator'] = self::DB_IN;
             }
             $sql .= ' ' . $part['operator'] . ' ';
 
