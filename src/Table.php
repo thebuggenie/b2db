@@ -608,14 +608,8 @@
                 case 'serializable':
                     return serialize($value);
                 case 'float':
-                    if ($value) {
-                        $tempval = gmp_strval($value);
-                        settype($tempval, 'float');
-
-                        return $tempval;
-                    } else {
-                        return $value;
-                    }
+                    settype($value, 'float');
+                    return $value;
                 case 'varchar':
                 case 'text':
                     return (string) $value;
