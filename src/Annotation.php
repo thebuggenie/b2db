@@ -14,9 +14,11 @@
             $this->_key = $key;
 
             $this->_data = array();
-            $ad = explode(',', $annotation_data);
+            $ad = explode(',', str_replace("\n", "", $annotation_data));
             foreach ($ad as $a_item) {
-                $ad_info = explode('=', $a_item);
+                $ad_info = explode('=', trim($a_item));
+                $ad_info[0] = trim($ad_info[0], "* \t\r\n\0\x0B");
+
                 if (array_key_exists(1, $ad_info)) {
                     switch (true) {
                         case (in_array($ad_info[1][0], array('"', "'")) && in_array($ad_info[1][count($ad_info[1]) - 1], array('"', "'"))):

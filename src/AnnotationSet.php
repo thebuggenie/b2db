@@ -35,7 +35,7 @@
                             $i++;
                             while (!$i <= $dblen) {
                                 $character = $docblock[$i];
-                                if (in_array($character, array("\n", ")"))) {
+                                if (in_array($character, array(")"))) {
                                     break;
                                 } else {
                                     $current_annotation_data .= $character;
