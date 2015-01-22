@@ -231,20 +231,20 @@
             $values = ($statement->getCriteria() instanceof Criteria) ? $statement->getCriteria()->getValues() : array();
 
             $backtrace = debug_backtrace();
-            $reserved_names = array('Core.php', 'Saveable.php', 'Criteria.php', 'Criterion.php', 'Resultset.php', 'Row.php', 'Statement.php', 'Transaction.php', 'B2DBTable.php', 'B2DB.php', 'Criteria.php', 'B2DBCriterion.php', 'B2DBResultset.php', 'Row.php', 'Statement.php', 'Transaction.php', 'Table.php', 'TBGB2DBTable.php');
+            $reserved_names = array('Core.php', 'Saveable.php', 'Criteria.php', 'Criterion.php', 'Resultset.php', 'Row.php', 'Statement.php', 'Transaction.php', 'Criteria.php', 'B2DBCriterion.php', 'Row.php', 'Statement.php', 'Transaction.php', 'Table.php');
 
             $trace = null;
             foreach ($backtrace as $t) {
+                if (!array_key_exists('file', $t)) continue;
                 if (!\in_array(basename($t['file']), $reserved_names)) {
                     $trace = $t;
                     break;
                 }
             }
 
-            if (!$trace)
-                $trace = array('file' => 'unknown', 'line' => 'unknown', 'function' => 'unknown');
+            $trace = (!$trace) ? array('file' => 'unknown', 'line' => 'unknown', 'function' => 'unknown', 'class' => 'unknown', 'type' => 'unknown', 'args' => array()) : $trace;
 
-            self::$_sqlhits[] = array('sql' => $sql, 'values' => implode(', ', $values), 'time' => $time, 'filename' => $trace['file'], 'line' => $trace['line'], 'function' => $trace['function']);
+            self::$_sqlhits[] = array('sql' => $sql, 'values' => implode(', ', $values), 'time' => $time, 'filename' => $trace['file'], 'line' => $trace['line'], 'function' => $trace['function'], 'class' => $trace['class'], 'type' => $trace['type'], 'arguments' => $trace['args']);
             self::$_sqltiming += $time;
         }
 
