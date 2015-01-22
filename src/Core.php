@@ -235,16 +235,22 @@
 
             $trace = null;
             foreach ($backtrace as $t) {
+                if (isset($trace)) {
+                    $trace['function'] = (isset($t['function'])) ? $t['function'] : 'unknown';
+                    $trace['class'] = (isset($t['class'])) ? $t['class'] : 'unknown';
+                    $trace['type'] = (isset($t['type'])) ? $t['type'] : 'unknown';
+                    break;
+                }
                 if (!array_key_exists('file', $t)) continue;
                 if (!\in_array(basename($t['file']), $reserved_names)) {
                     $trace = $t;
-                    break;
+                    continue;
                 }
             }
 
             $trace = (!$trace) ? array('file' => 'unknown', 'line' => 'unknown', 'function' => 'unknown', 'class' => 'unknown', 'type' => 'unknown', 'args' => array()) : $trace;
 
-            self::$_sqlhits[] = array('sql' => $sql, 'values' => implode(', ', $values), 'time' => $time, 'filename' => $trace['file'], 'line' => $trace['line'], 'function' => $trace['function'], 'class' => $trace['class'], 'type' => $trace['type'], 'arguments' => $trace['args']);
+            self::$_sqlhits[] = array('sql' => $sql, 'values' => implode(', ', $values), 'time' => $time, 'filename' => $trace['file'], 'line' => $trace['line'], 'function' => $trace['function'], 'class' => (isset($trace['class']) ? $trace['class'] : 'unknown'), 'type' => (isset($trace['type']) ? $trace['type'] : 'unknown'), 'arguments' => $trace['args']);
             self::$_sqltiming += $time;
         }
 
