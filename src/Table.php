@@ -77,7 +77,7 @@
         /**
          * Return an instance of this table
          *
-         * @return \b2db\Table
+         * @return Table
          */
         public static function getTable()
         {
@@ -338,10 +338,11 @@
         }
 
         /**
-         *
-         * @param type $id
-         * @param Criteria $crit
-         * @param type $join
+         * Select an object by its unique id
+         * 
+         * @param integer $id
+         * @param Criteria $crit (optional) Criteria with filters
+         * @param mixed $join
          *
          * @return Saveable
          */
@@ -360,6 +361,7 @@
          * Counts rows
          *
          * @param Criteria $crit
+         * 
          * @return integer
          */
         public function doCount(Criteria $crit)
@@ -408,8 +410,9 @@
          * Selects one row from the table based on the given criteria
          *
          * @param Criteria $crit
+         * @param mixed $join
          *
-         * @return \b2db\Row
+         * @return Row
          */
         public function doSelectOne(Criteria $crit, $join = 'all')
         {
@@ -425,6 +428,14 @@
             return $resultset->getCurrentRow();
         }
 
+        /**
+         * Selects one object based on the given criteria
+         *
+         * @param Criteria $crit
+         * @param mixed $join
+         *
+         * @return Saveable
+         */
         public function selectOne(Criteria $crit, $join = 'all')
         {
             $row = $this->doSelectOne($crit, $join);
@@ -592,7 +603,7 @@
         /**
          * Return a new criteria with this table as the from-table
          *
-         * @param boolean $setupjointables[optional] Whether to auto-join all related tables by default
+         * @param boolean $setupjointables [optional] Whether to auto-join all related tables by default
          *
          * @return Criteria
          */
