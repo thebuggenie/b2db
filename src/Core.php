@@ -74,7 +74,7 @@
         /**
          * Loads a table and adds it to the B2DBObject stack
          *
-         * @param Table $tbl_name
+         * @param Table $table
          *
          * @return Table
          */
@@ -125,7 +125,8 @@
         /**
          * Initialize B2DB and load related B2DB classes
          *
-         * @param boolean $load_parameters[optional] whether to load connection parameters
+         * @param array $configuration [optional] Configuration to load
+         * @param boolean $load_parameters [optional] whether to load connection parameters
          */
         public static function initialize($configuration = array(), $cache_object = null)
         {
@@ -200,24 +201,27 @@
         /**
          * Returns the Table object
          *
-         * @param string $tbl_name The table class name to load
+         * @param string $tablename The table class name to load
          *
          * @return Table
          */
-        public static function getTable($tbl_name)
+        public static function getTable($tablename)
         {
-            if (!isset(self::$_tables[$tbl_name])) {
-                self::loadNewTable(new $tbl_name());
+            if (!isset(self::$_tables[$tablename])) {
+                self::loadNewTable(new $tablename());
             }
-            $tbl_name = ltrim($tbl_name, '\\');
-            if (!isset(self::$_tables[$tbl_name])) {
-                throw new Exception('Table ' . $tbl_name . ' is not loaded');
+            $tablename = ltrim($tablename, '\\');
+            if (!isset(self::$_tables[$tablename])) {
+                throw new Exception('Table ' . $tablename . ' is not loaded');
             }
-            return self::$_tables[$tbl_name];
+            return self::$_tables[$tablename];
         }
 
         /**
-         * Register a new SQL call
+         * Register a new SQL call (debug only)
+         *
+         * @param Statement $statement
+         * @param mixed $pretime
          */
         public static function sqlHit(Statement $statement, $pretime)
         {
