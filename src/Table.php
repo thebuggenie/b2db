@@ -856,7 +856,7 @@
             return $classname;
         }
 
-        protected function _populateFromRow($row = null, $classname = null, $id_column = null, $from_resultset = false)
+        protected function _populateFromRow($row = null, $classname = null, $id_column = null, $row_id = null, $from_resultset = false)
         {
             $item = null;
             if ($row) {
@@ -878,9 +878,10 @@
                 }
 
                 $id_column = ($id_column !== null) ? $id_column : $row->getCriteria()->getTable()->getIdColumn();
-                $row_id = $row->get($id_column);
+                $row_id = ($row_id !== null) ? $row_id : $row->get($id_column);
+                $is_cached = $classname::getB2DBTable()->hasCachedB2DBObject($row_id);
                 $item = $classname::getB2DBCachedObjectIfAvailable($row_id, $classname, $row);
-                if (!$from_resultset && Core::isDebugMode()) {
+                if (!$from_resultset && !$is_cached && Core::isDebugMode()) {
                     Core::objectPopulationHit(1, array($classname), $pretime);
                 }
             }
@@ -909,9 +910,11 @@
                     if ($classnames) {
                         $classname = $this->_getSubclassNameFromRow($row, $classnames);
                     }
-                    $item = $this->_populateFromRow($row, $classname, $id_column, true);
+                    $row_id = $row->get($id_column);
+                    $is_cached = $classname::getB2DBTable()->hasCachedB2DBObject($row_id);
+                    $item = $this->_populateFromRow($row, $classname, $id_column, $row_id, true);
                     $items[$row->get($index_column)] = $item;
-                    if (Core::isDebugMode()) {
+                    if (!$is_cached && Core::isDebugMode()) {
                         $populated_classnames[$classname] = $classname;
                         $populated_classes++;
                     }

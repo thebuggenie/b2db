@@ -260,7 +260,7 @@
          */
         public static function objectPopulationHit($num_classes, $classnames, $pretime)
         {
-            if (!Core::isDebugMode())
+            if (!Core::isDebugMode() || !$num_classes)
                 return;
 
             $time = Core::getDebugTime() - $pretime;
