@@ -53,6 +53,12 @@
 
         protected static $_sqltiming;
 
+        protected static $_objectpopulationhits = array();
+
+        protected static $_objectpopulationtiming;
+
+        protected static $_objectpopulationcounts;
+
         protected static $_aliascnt = 0;
 
         protected static $_transaction_active = false;
@@ -102,6 +108,11 @@
         public static function isDebugMode()
         {
             return self::$_debug_mode;
+        }
+
+        public static function getDebugTime()
+        {
+            return array_sum(explode(' ', microtime()));
         }
 
         public static function isDebugLoggingEnabled()
@@ -217,27 +228,12 @@
             return self::$_tables[$tablename];
         }
 
-        /**
-         * Register a new SQL call (debug only)
-         *
-         * @param Statement $statement
-         * @param mixed $pretime
-         */
-        public static function sqlHit(Statement $statement, $pretime)
+        protected static function getRelevantDebugBacktraceElement()
         {
-            if (!Core::isDebugMode())
-                return;
-
-            $time = explode(' ', microtime());
-            $posttime = $time[1] + $time[0];
-            $time = $posttime - $pretime;
-            $sql = $statement->printSQL();
-            $values = ($statement->getCriteria() instanceof Criteria) ? $statement->getCriteria()->getValues() : array();
-
+            $trace = null;
             $backtrace = debug_backtrace();
             $reserved_names = array('Core.php', 'Saveable.php', 'Criteria.php', 'Criterion.php', 'Resultset.php', 'Row.php', 'Statement.php', 'Transaction.php', 'Criteria.php', 'B2DBCriterion.php', 'Row.php', 'Statement.php', 'Transaction.php', 'Table.php');
 
-            $trace = null;
             foreach ($backtrace as $t) {
                 if (isset($trace)) {
                     $trace['function'] = (isset($t['function'])) ? $t['function'] : 'unknown';
@@ -252,7 +248,45 @@
                 }
             }
 
-            $trace = (!$trace) ? array('file' => 'unknown', 'line' => 'unknown', 'function' => 'unknown', 'class' => 'unknown', 'type' => 'unknown', 'args' => array()) : $trace;
+            return (!$trace) ? array('file' => 'unknown', 'line' => 'unknown', 'function' => 'unknown', 'class' => 'unknown', 'type' => 'unknown', 'args' => array()) : $trace;
+        }
+
+        /**
+         * Register a new object population call (debug only)
+         *
+         * @param Resultset $resultset
+         * @param array $classnames
+         * @param mixed $pretime
+         */
+        public static function objectPopulationHit($num_classes, $classnames, $pretime)
+        {
+            if (!Core::isDebugMode())
+                return;
+
+            $time = Core::getDebugTime() - $pretime;
+            $trace = self::getRelevantDebugBacktraceElement();
+
+            self::$_objectpopulationhits[] = array('classnames' => $classnames, 'num_classes' => $num_classes, 'time' => $time, 'filename' => $trace['file'], 'line' => $trace['line'], 'function' => $trace['function'], 'class' => (isset($trace['class']) ? $trace['class'] : 'unknown'), 'type' => (isset($trace['type']) ? $trace['type'] : 'unknown'), 'arguments' => $trace['args']);
+            self::$_objectpopulationcounts += $num_classes;
+            self::$_objectpopulationtiming += $time;
+        }
+
+        /**
+         * Register a new SQL call (debug only)
+         *
+         * @param Statement $statement
+         * @param mixed $pretime
+         */
+        public static function sqlHit(Statement $statement, $pretime)
+        {
+            if (!Core::isDebugMode())
+                return;
+
+            $time = Core::getDebugTime() - $pretime;
+            $sql = $statement->printSQL();
+            $values = ($statement->getCriteria() instanceof Criteria) ? $statement->getCriteria()->getValues() : array();
+
+            $trace = self::getRelevantDebugBacktraceElement();
 
             self::$_sqlhits[] = array('sql' => $sql, 'values' => implode(', ', $values), 'time' => $time, 'filename' => $trace['file'], 'line' => $trace['line'], 'function' => $trace['function'], 'class' => (isset($trace['class']) ? $trace['class'] : 'unknown'), 'type' => (isset($trace['type']) ? $trace['type'] : 'unknown'), 'arguments' => $trace['args']);
             self::$_sqltiming += $time;
@@ -276,6 +310,26 @@
         public static function getSQLTiming()
         {
             return self::$_sqltiming;
+        }
+
+        /**
+         * Get number of object population calls
+         *
+         * @return integer
+         */
+        public static function getObjectPopulationHits()
+        {
+            return self::$_objectpopulationhits;
+        }
+
+        public static function getObjectPopulationCount()
+        {
+            return self::$_objectpopulationcounts;
+        }
+
+        public static function getObjectPopulationTiming()
+        {
+            return self::$_objectpopulationtiming;
         }
 
         /**

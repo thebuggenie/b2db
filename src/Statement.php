@@ -75,12 +75,6 @@
             }
         }
 
-        protected function getDebugTime()
-        {
-            $time = explode(' ', microtime());
-            return $time[1] + $time[0];
-        }
-
         /**
          * Performs a query, then returns a resultset
          *
@@ -96,7 +90,7 @@
                     if (Core::isDebugLoggingEnabled())
                         \caspar\core\Logging::log('executing PDO query (' . Core::getSQLCount() . ') - ' . (($this->getCriteria() instanceof Criteria) ? $this->getCriteria()->action : 'unknown'), 'B2DB');
 
-                    $pretime = $this->getDebugTime();
+                    $pretime = Core::getDebugTime();
                 }
 
                 $res = $this->statement->execute($values);

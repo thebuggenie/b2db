@@ -856,10 +856,15 @@
             return $classname;
         }
 
-        protected function _populateFromRow($row = null, $classname = null, $id_column = null)
+        protected function _populateFromRow($row = null, $classname = null, $id_column = null, $from_resultset = false)
         {
             $item = null;
             if ($row) {
+                if (!$from_resultset && Core::isDebugMode()) {
+                    $pretime = Core::getDebugTime();
+                    $populated_classnames = array();
+                    $populated_classes = 0;
+                }
                 if ($classname === null) {
                     $classnames = Core::getCachedTableEntityClasses(\get_class($this));
                     if ($classnames) {
@@ -875,6 +880,9 @@
                 $id_column = ($id_column !== null) ? $id_column : $row->getCriteria()->getTable()->getIdColumn();
                 $row_id = $row->get($id_column);
                 $item = $classname::getB2DBCachedObjectIfAvailable($row_id, $classname, $row);
+                if (!$from_resultset && Core::isDebugMode()) {
+                    Core::objectPopulationHit(1, array($classname), $pretime);
+                }
             }
             return $item;
         }
@@ -883,6 +891,11 @@
         {
             $items = array();
             if ($resultset instanceof Resultset) {
+                if (Core::isDebugMode()) {
+                    $pretime = Core::getDebugTime();
+                    $populated_classnames = array();
+                    $populated_classes = 0;
+                }
                 $criteria = $resultset->getCriteria();
                 $id_column = ($id_column !== null) ? $id_column : $criteria->getTable()->getIdColumn();
                 if ($index_column === null) {
@@ -896,8 +909,15 @@
                     if ($classnames) {
                         $classname = $this->_getSubclassNameFromRow($row, $classnames);
                     }
-                    $item = $this->_populateFromRow($row, $classname, $id_column);
+                    $item = $this->_populateFromRow($row, $classname, $id_column, true);
                     $items[$row->get($index_column)] = $item;
+                    if (Core::isDebugMode()) {
+                        $populated_classnames[$classname] = $classname;
+                        $populated_classes++;
+                    }
+                }
+                if (Core::isDebugMode()) {
+                    Core::objectPopulationHit($populated_classes, $populated_classnames, $pretime);
                 }
             }
             return $items;
