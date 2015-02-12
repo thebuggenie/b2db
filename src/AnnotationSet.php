@@ -34,8 +34,11 @@
                         if ($character == '(') {
                             $i++;
                             while (!$i <= $dblen) {
+                                if (!isset($docblock[$i])) {
+                                    throw new Exception('Cannot parse annotation: ' . $docblock);
+                                }
                                 $character = $docblock[$i];
-                                if (in_array($character, array(")"))) {
+                                if (in_array($character, array(")", '@'))) {
                                     break;
                                 } else {
                                     $current_annotation_data .= $character;
