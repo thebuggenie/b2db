@@ -655,7 +655,7 @@
 
         public static function isTransactionActive()
         {
-            return (bool) self::$_transaction_active == Transaction::STATE_STARTED;
+            return (bool) self::$_transaction_active == Transaction::DB_TRANSACTION_STARTED;
         }
 
         /**
