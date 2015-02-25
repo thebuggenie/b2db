@@ -48,7 +48,7 @@
 
         final public function __construct()
         {
-            if ($entity_class = Core::getCachedTableEntityClass(\get_called_class())) {
+            if ($entity_class = Core::getCachedTableEntityClass('\\'.get_called_class())) {
                 if ($details = Core::getCachedTableDetails($entity_class)) {
                     $this->_columns = $details['columns'];
                     $this->_foreigncolumns = $details['foreign_columns'];
@@ -63,7 +63,7 @@
 
         protected function _initialize()
         {
-            throw new Exception('The table "' . \get_class($this) . '" has no corresponding entity class. You must override the _initialize() method to set up the table details.');
+            throw new Exception('The table "\\' . get_class($this) . '" has no corresponding entity class. You must override the _initialize() method to set up the table details.');
         }
 
         protected function _setup($b2db_name, $id_column)
@@ -81,8 +81,7 @@
          */
         public static function getTable()
         {
-            $tablename = \get_called_class();
-            return Core::getTable($tablename);
+            return Core::getTable('\\'.get_called_class());
         }
 
         protected function _addColumn($column, $details)
@@ -157,7 +156,7 @@
                     throw new Exception('Cannot use a text, blob or boolean column as a foreign key');
             }
             //$this->_foreigntables[$addtable->getB2DBAlias()] = array('table' => $addtable, 'key' => $key, 'column' => $column);
-            $this->_foreigncolumns[$column] = array('class' => \get_class($table), 'key' => $key, 'name' => $column);
+            $this->_foreigncolumns[$column] = array('class' => '\\'.get_class($table), 'key' => $key, 'name' => $column);
         }
 
         public function getForeignTableByLocalColumn($column)
@@ -575,7 +574,7 @@
                     }
                 }
             } catch (Exception $e) {
-                throw new Exception('An error occured when trying to create indexes for table "' . $this->getB2DBName() . '" (defined in "' . \get_class($this) . ')": ' . $e->getMessage(), $e->getSQL());
+                throw new Exception('An error occured when trying to create indexes for table "' . $this->getB2DBName() . '" (defined in "\\' . get_class($this) . ')": ' . $e->getMessage(), $e->getSQL());
             }
         }
 
@@ -640,7 +639,7 @@
             $changed = false;
             foreach ($this->getColumns() as $column) {
                 if (!array_key_exists('property', $column)) {
-                    throw new Exception('Could not match all columns to properties for object of type ' . \get_class($object) . ". Make sure you're not mixing between initializing the table manually and using column (property) annotations");
+                    throw new Exception('Could not match all columns to properties for object of type \\' . get_class($object) . ". Make sure you're not mixing between initializing the table manually and using column (property) annotations");
                 }
                 $property = $column['property'];
                 $value = $this->formatify($object->getB2DBSaveablePropertyValue(mb_strtolower($property)), $column['type']);
@@ -690,7 +689,7 @@
                 case 'varchar':
                 case 'serializable':
                     if (!$column['length'])
-                        throw new Exception("Column '{$column['name']}' (defined in " . \get_class($this) . ") is missing required 'length' property");
+                        throw new Exception("Column '{$column['name']}' (defined in \\" . get_class($this) . ") is missing required 'length' property");
                     $fsql .= 'VARCHAR(' . $column['length'] . ')';
                     break;
                 case 'float':
@@ -866,11 +865,11 @@
                     $populated_classes = 0;
                 }
                 if ($classname === null) {
-                    $classnames = Core::getCachedTableEntityClasses(\get_class($this));
+                    $classnames = Core::getCachedTableEntityClasses('\\'.get_class($this));
                     if ($classnames) {
                         $classname = $this->_getSubclassNameFromRow($row, $classnames);
                     } else {
-                        $classname = Core::getCachedTableEntityClass(\get_class($this));
+                        $classname = Core::getCachedTableEntityClass('\\'.get_class($this));
                     }
                     if (!$classname) {
                         throw new Exception("Classname '{$classname}' or subclasses for table '{$this->getB2DBName()}' is not valid");
@@ -902,9 +901,9 @@
                 if ($index_column === null) {
                     $index_column = ($criteria->getIndexBy()) ? $criteria->getIndexBy() : $id_column;
                 }
-                $classnames = Core::getCachedTableEntityClasses(\get_class($this));
+                $classnames = Core::getCachedTableEntityClasses('\\'.get_class($this));
                 if ($classname === null) {
-                    $classname = Core::getCachedTableEntityClass(\get_class($this));
+                    $classname = Core::getCachedTableEntityClass('\\'.get_class($this));
                 }
                 while ($row = $resultset->getNextRow()) {
                     if ($classnames) {
@@ -930,7 +929,7 @@
         {
             $criteria = $this->getCriteria();
             $foreign_table = $class->getB2DBTable();
-            $foreign_table_class = \get_class($foreign_table);
+            $foreign_table_class = '\\'.get_class($foreign_table);
             $item_class = (array_key_exists('class', $relation_details)) ? $relation_details['class'] : null;
             $item_column = null;
             $item_table_class = null;
@@ -938,7 +937,7 @@
                 $item_table_class = Core::getCachedB2DBTableClass($item_class);
             }
             if ($relation_details['foreign_column']) {
-                $saveable_class = \get_class($class);
+                $saveable_class = '\\'.get_class($class);
                 $table_details = ($item_class) ? Core::getCachedTableDetails($item_class) : Core::getTableDetails($relation_details['joinclass']);
                 if ($relation_details['orderby']) {
                     $criteria->addOrderBy("{$table_details['name']}." . $relation_details['orderby']);

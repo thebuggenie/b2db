@@ -32,7 +32,7 @@
          */
         public static function getB2DBTable()
         {
-            $b2dbtablename = Core::getCachedB2DBTableClass(\get_called_class());
+            $b2dbtablename = Core::getCachedB2DBTableClass('\\'.get_called_class());
             return $b2dbtablename::getTable();
         }
 
@@ -48,7 +48,7 @@
 
         protected function _b2dbLazycount($property)
         {
-            $relation_details = Core::getCachedEntityRelationDetails(\get_class($this), $property);
+            $relation_details = Core::getCachedEntityRelationDetails('\\'.get_class($this), $property);
             if (array_key_exists('manytomany', $relation_details) && $relation_details['manytomany']) {
                 $table = $relation_details['joinclass'];
             } else {
@@ -60,7 +60,7 @@
 
         protected function _b2dbLazyload($property, $use_cache = true)
         {
-            $relation_details = Core::getCachedEntityRelationDetails(\get_class($this), $property);
+            $relation_details = Core::getCachedEntityRelationDetails('\\'.get_class($this), $property);
             if ($relation_details['collection']) {
                 if (array_key_exists('manytomany', $relation_details) && $relation_details['manytomany']) {
                     $table = $relation_details['joinclass'];
@@ -85,7 +85,7 @@
                         $this->$property = null;
                     }
                 } else {
-                    throw new \Exception("Unknown class definition for property {$property} in class " . \get_class($this));
+                    throw new \Exception("Unknown class definition for property {$property} in class \\" . get_class($this));
                 }
             }
             return $this->$property;
@@ -95,7 +95,7 @@
         {
             $table = self::getB2DBTable();
             $id_column = $table->getIdColumn();
-            $this_class = \get_class($this);
+            $this_class = '\\'.get_class($this);
             foreach ($table->getColumns() as $column) {
                 if ($column['name'] == $id_column) continue;
 
@@ -199,7 +199,7 @@
         public function getB2DBSaveablePropertyValue($property_name)
         {
             if (!property_exists($this, $property_name)) {
-                throw new \Exception("Could not find class property '{$property_name}' in class " . get_class($this) . ". The class must have all properties from the corresponding B2DB table class available");
+                throw new \Exception("Could not find class property '{$property_name}' in class \\" . get_class($this) . ". The class must have all properties from the corresponding B2DB table class available");
             }
             if (is_object($this->$property_name)) {
                 return (int) $this->$property_name->getID();
@@ -229,7 +229,7 @@
         {
             if ($id != null) {
                 if (!is_numeric($id)) {
-                    throw new \Exception('Please specify a valid id for object of type ' . get_class($this));
+                    throw new \Exception('Please specify a valid id for object of type \\' . get_class($this));
                 }
                 if ($row === null) {
                     $row = self::getB2DBTable()->doSelectById($id);
@@ -330,7 +330,7 @@
         {
             if ($classname === null) {
                 $table = $this->getB2DBTable();
-                $classnames = Core::getCachedTableEntityClasses(\get_class($table));
+                $classnames = Core::getCachedTableEntityClasses('\\'.get_class($table));
                 if ($classnames === null) {
                     return $this;
                 }

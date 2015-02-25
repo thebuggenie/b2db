@@ -86,7 +86,7 @@
          */
         public static function loadNewTable(Table $table)
         {
-            self::$_tables[\get_class($table)] = $table;
+            self::$_tables['\\'.get_class($table)] = $table;
             return $table;
         }
 
@@ -158,6 +158,8 @@
                     self::setDBname($configuration['database']);
                 if (array_key_exists('tableprefix', $configuration) && $configuration['tableprefix'])
                     self::setTablePrefix($configuration['tableprefix']);
+                if (array_key_exists('debug', $configuration))
+                    self::setDebugMode((bool) $configuration['debug']);
 
                 self::$_cache_object = $cache_object;
             } catch (\Exception $e) {
@@ -221,7 +223,6 @@
             if (!isset(self::$_tables[$tablename])) {
                 self::loadNewTable(new $tablename());
             }
-            $tablename = ltrim($tablename, '\\');
             if (!isset(self::$_tables[$tablename])) {
                 throw new Exception('Table ' . $tablename . ' is not loaded');
             }
