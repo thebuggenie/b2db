@@ -844,9 +844,9 @@
         {
             if (!array_key_exists($classname, self::$_cached_entity_classes)) {
                 $entity_key = 'b2db_cache_' . $classname;
-                if (self::$_cache_object->has($entity_key)) {
+                if (self::$_cache_object && self::$_cache_object->has($entity_key)) {
                     self::$_cached_entity_classes[$classname] = self::$_cache_object->get($entity_key);
-                } elseif (self::$_cache_object->fileHas($entity_key)) {
+                } elseif (self::$_cache_object && self::$_cache_object->fileHas($entity_key)) {
                     self::$_cached_entity_classes[$classname] = self::$_cache_object->fileGet($entity_key);
                 } else {
                     self::cacheEntityClass($classname);
@@ -858,9 +858,9 @@
         {
             if (!array_key_exists($classname, self::$_cached_table_classes)) {
                 $key = 'b2db_cache_' . $classname;
-                if (self::$_cache_object->has($key)) {
+                if (self::$_cache_object && self::$_cache_object->has($key)) {
                     self::$_cached_table_classes[$classname] = self::$_cache_object->get($key);
-                } elseif (self::$_cache_object->fileHas($key)) {
+                } elseif (self::$_cache_object && self::$_cache_object->fileHas($key)) {
                     self::$_cached_table_classes[$classname] = self::$_cache_object->fileGet($key);
                 } else {
                     self::cacheTableClass($classname);
