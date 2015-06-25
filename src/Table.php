@@ -803,7 +803,7 @@
             switch (Core::getDBtype()) {
                 case 'pgsql':
                     $default_definition = $this->_getColumnDefaultDefinitionSQL($details);
-                    if ($default_definition) {
+                    if (!$default_definition) {
                         $sql = '';
                     } else {
                         $sql = 'ALTER TABLE ' . $this->_getTableNameSQL();
