@@ -674,15 +674,17 @@
         protected function _getColumnDefaultDefinitionSQL($column)
         {
             $sql = '';
-            if (is_int($column['default_value'])) {
-                if ($column['type'] == 'boolean') {
-                    $sql .= ' DEFAULT ';
-                    $sql .= ($column['default_value']) ? 'true' : 'false';
+            if (isset($column['default_value'])) {
+                if (is_int($column['default_value'])) {
+                    if ($column['type'] == 'boolean') {
+                        $sql .= ' DEFAULT ';
+                        $sql .= ($column['default_value']) ? 'true' : 'false';
+                    } else {
+                        $sql .= ' DEFAULT ' . $column['default_value'];
+                    }
                 } else {
-                    $sql .= ' DEFAULT ' . $column['default_value'];
+                    $sql .= ' DEFAULT \'' . $column['default_value'] . '\'';
                 }
-            } else {
-                $sql .= ' DEFAULT \'' . $column['default_value'] . '\'';
             }
 
             return $sql;
