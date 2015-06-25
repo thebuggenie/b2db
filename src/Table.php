@@ -802,10 +802,15 @@
         {
             switch (Core::getDBtype()) {
                 case 'pgsql':
-                    $sql = 'ALTER TABLE ' . $this->_getTableNameSQL();
-                    $qc = $this->getQC();
-                    $sql .= " ALTER COLUMN $qc" . $this->_getRealColumnFieldName($details['name']) . "$qc SET";
-                    $sql .= $this->_getColumnDefaultDefinitionSQL($details);
+                    $default_definition = $this->_getColumnDefaultDefinitionSQL($details);
+                    if ($default_definition) {
+                        $sql = '';
+                    } else {
+                        $sql = 'ALTER TABLE ' . $this->_getTableNameSQL();
+                        $qc = $this->getQC();
+                        $sql .= " ALTER COLUMN $qc" . $this->_getRealColumnFieldName($details['name']) . "$qc SET";
+                        $sql .= $default_definition;
+                    }
                     break;
             }
 
