@@ -851,7 +851,9 @@
             }
             if (count($sqls)) {
                 foreach ($sqls as $sqlStmt) {
-                    Statement::getPreparedStatement($sqlStmt)->performQuery();
+                    if ($sqlStmt) {
+                        Statement::getPreparedStatement($sqlStmt)->performQuery();
+                    }
                 }
             }
 
@@ -869,7 +871,9 @@
             }
             if (count($sqls)) {
                 foreach ($sqls as $sqlStmt) {
-                    Statement::getPreparedStatement($sqlStmt)->performQuery();
+                    if ($sqlStmt) {
+                        Statement::getPreparedStatement($sqlStmt)->performQuery();
+                    }
                 }
             }
         }
