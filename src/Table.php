@@ -655,7 +655,7 @@
                     $changed = true;
                     $crit->addUpdate($column['name'], $value);
                 } elseif ($column['name'] != $this->getIdColumn()) {
-                    $crit->addInsert($column['name'], $value);
+                    $crit->addInsert($column['name'], $value, $column['type']);
                 }
             }
             if ($id) {

@@ -227,12 +227,12 @@
          *
          * @return Base2DBCriteria
          */
-        public function addUpdate($column, $value)
+        public function addUpdate($column, $value, $type = null)
         {
             if (is_object($value)) {
                 throw new Exception("Invalid value, can't be an object.", $this->getSQL());
             }
-            $this->updates[] = array('column' => $column, 'value' => $value);
+            $this->updates[] = array('column' => $column, 'value' => $value, 'type' => $type);
             return $this;
         }
 
@@ -268,9 +268,9 @@
          *
          * @return Base2DBCriteria
          */
-        public function addInsert($column, $value, $operator = self::DB_EQUALS, $variable = '')
+        public function addInsert($column, $value, $type = null, $operator = self::DB_EQUALS, $variable = '')
         {
-            $this->criterias[$column] = array('column' => $column, 'value' => $value, 'operator' => $operator, 'variable' => $variable);
+            $this->criterias[$column] = array('column' => $column, 'value' => $value, 'type' => $type, 'operator' => $operator, 'variable' => $variable);
             return $this;
         }
 
@@ -635,17 +635,11 @@
          *
          * @param mixed $value
          */
-        protected function _addValue($value)
+        protected function _addValue($value, $type = null)
         {
-            if (is_bool($value)) {
-                if (Core::getDBtype() == 'mysql') {
-                    $this->values[] = (int) $value;
-                } elseif (Core::getDBtype() == 'pgsql') {
-                    $this->values[] = ($value) ? 'true' : 'false';
-                }
-            } else {
-                $this->values[] = $value;
-            }
+            if (is_null($type) && is_bool($value))
+                $type = 'boolean';
+            $this->values[] = array('type' => $type, 'value' => $value);
         }
 
         /**
@@ -755,7 +749,7 @@
                     $values[] = '@' . $a_crit['variable'];
                 } else {
                     $values[] = '?';
-                    $this->_addValue($a_crit['value']);
+                    $this->_addValue($a_crit['value'], $a_crit['type']);
                 }
             }
 
@@ -777,7 +771,7 @@
                 $prefix = $this->_quoteIdentifier($column);
                 $updates[] = $prefix . self::DB_EQUALS . '?';
 
-                $this->_addValue($an_upd['value']);
+                $this->_addValue($an_upd['value'], $an_upd['type']);
             }
             $sql = 'UPDATE ' . $this->_quoteIdentifier($this->_getTablename()) . ' SET ' . join(', ', $updates);
             return $sql;

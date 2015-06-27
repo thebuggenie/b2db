@@ -93,7 +93,25 @@
                     $pretime = Core::getDebugTime();
                 }
 
-                $res = $this->statement->execute($values);
+                for ($i = 0; $i < sizeof($values); $i++) {
+                    $value = $values[$i]['value'];
+                    $type = $values[$i]['type'];
+                    switch ($type) {
+                    case 'boolean':
+                        $pdotype = \PDO::PARAM_BOOL;
+                        break;
+                    case 'integer':
+                        $pdotype = \PDO::PARAM_INT;
+                        break;
+                    case 'blob':
+                        $pdotype = \PDO::PARAM_LOB;
+                        break;
+                    default:
+                        $pdotype = \PDO::PARAM_STR;
+                    }
+                    $this->statement->bindValue($i+1, $value, $pdotype);
+                }
+                $res = $this->statement->execute();
 
                 if (!$res) {
                     $error = $this->statement->errorInfo();
@@ -203,6 +221,7 @@
             if ($this->getCriteria() instanceof Criteria) {
                 $str .= $this->crit->getSQL();
                 foreach ($this->crit->getValues() as $val) {
+                    $val = $val['value'];
                     if (is_null($val)) {
                         $val = 'null';
                     } elseif (!is_int($val)) {

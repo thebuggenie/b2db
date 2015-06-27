@@ -135,6 +135,7 @@
             if ($this->crit instanceof Criteria) {
                 $str .= $this->crit->getSQL();
                 foreach ($this->crit->getValues() as $val) {
+                    $val = $val['values'];
                     if (!is_int($val)) {
                         $val = '\'' . $val . '\'';
                     }
