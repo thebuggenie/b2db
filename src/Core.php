@@ -596,7 +596,15 @@
                 if (!self::$_db_connection instanceof PDO) {
                     throw new Exception('Could not connect to the database, but not caught by PDO');
                 }
-                self::getDBLink()->query('SET NAMES UTF8');
+		switch (self::getDBtype())
+		{
+		  case 'mysql':
+		    self::getDBLink()->query('SET NAMES UTF8');
+		    break;
+		  case 'pgsql':
+		    self::getDBlink()->query('set client_encoding to UTF8');
+		    break;
+		}
             } catch (PDOException $e) {
                 throw new Exception("Could not connect to the database [" . $e->getMessage() . "], dsn: ".self::getDSN());
             } catch (Exception $e) {
