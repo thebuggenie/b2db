@@ -708,6 +708,22 @@
             return Core::getTablePrefix() . $this->fromtable->getB2DBName();
         }
 
+        protected function _quoteIdentifier($id)
+        {
+            $parts = array();
+            foreach (explode('.', $id) as $part) {
+                switch (Core::getDBtype()) {
+                case 'mysql':
+                    $parts[] = "`$part`";
+                    break;
+                default: # ANSI 
+                    $parts[] = "\"$part\"";
+                    break;
+                }
+            }
+            return join('.', $parts);
+        }
+
         /**
          * Generate the "delete" part of the query
          *
@@ -715,7 +731,7 @@
          */
         protected function _generateDeleteSQL()
         {
-            return 'DELETE FROM ' . $this->_getTablename();
+            return 'DELETE FROM ' . $this->_quoteIdentifier($this->_getTablename());
         }
 
         /**
@@ -728,20 +744,11 @@
             $inserts = array();
             $values = array();
 
-            $tablename = $this->_getTablename();
-            $sql = (Core::getDBtype() == 'mysql') ? "INSERT INTO `{$tablename}`" : "INSERT INTO {$tablename} ";
+            $sql = 'INSERT INTO ' . $this->_quoteIdentifier($this->_getTablename()). ' ';
 
             foreach ($this->criterias as $a_crit) {
                 $column = mb_substr($a_crit['column'], mb_strpos($a_crit['column'], '.') + 1);
-                switch (Core::getDBtype()) {
-                    case 'pgsql':
-                        $inserts[] = '"' . $column . '"';
-                        break;
-                    case 'mysql':
-                        $inserts[] = '`' . $column . '`';
-                        break;
-                    default:
-                }
+                $inserts[] = $this->_quoteIdentifier($column);
             }
             foreach ($this->criterias as $a_crit) {
                 if ($a_crit['variable'] != '') {
@@ -767,12 +774,12 @@
             $updates = array();
             foreach ($this->updates as $an_upd) {
                 $column = mb_substr($an_upd['column'], mb_strpos($an_upd['column'], '.') + 1);
-                $prefix = (Core::getDBtype() == 'mysql') ? '`' . $column . '`' : $column;
+                $prefix = $this->_quoteIdentifier($column);
                 $updates[] = $prefix . self::DB_EQUALS . '?';
 
                 $this->_addValue($an_upd['value']);
             }
-            $sql = 'UPDATE ' . $this->_getTablename() . ' SET ' . join(', ', $updates);
+            $sql = 'UPDATE ' . $this->_quoteIdentifier($this->_getTablename()) . ' SET ' . join(', ', $updates);
             return $sql;
         }
 
@@ -796,15 +803,15 @@
                     $alias = ($selection['alias']) ? $selection['alias'] : $this->getSelectionAlias($column);
                     $sub_sql = (isset($selection['variable']) && $selection['variable'] != '') ? ' @' . $selection['variable'] . ':=' : '';
                     if ($selection['special'] != '') {
-                        $sub_sql .= mb_strtoupper($selection['special']) . '(' . $selection['column'] . ')';
+                        $sub_sql .= mb_strtoupper($selection['special']) . '(' . $this->_quoteIdentifier($selection['column']) . ')';
                         if ($selection['additional'] != '')
                             $sub_sql .= ' ' . $selection['additional'] . ' ';
                         if (mb_strpos($selection['special'], '(') !== false)
                             $sub_sql .= ')';
                     } else {
-                        $sub_sql .= $selection['column'];
+                        $sub_sql .= $this->_quoteIdentifier($selection['column']);
                     }
-                    $sub_sql .= ' AS ' . $alias;
+                    $sub_sql .= ' AS ' . $this->_quoteIdentifier($alias);
                     $sqls[] = $sub_sql;
                 }
                 $sql .= join(', ', $sqls);
@@ -824,7 +831,7 @@
         protected function _generateCountSQL()
         {
             $sql = ($this->distinct) ? 'SELECT COUNT(DISTINCT ' : 'SELECT COUNT(';
-            $sql .= $this->getSelectionColumn($this->getTable()->getIdColumn());
+            $sql .= $this->_quoteIdentifier($this->getSelectionColumn($this->getTable()->getIdColumn()));
             $sql .= ') as num_col';
 
             return $sql;
@@ -846,7 +853,8 @@
 
         protected function _generateSQLPart($part, $strip)
         {
-            $initial_sql = ($strip) ? $this->getColumnName($part['column']) : $this->getSelectionColumn($part['column']);
+            $column = ($strip) ? $this->getColumnName($part['column']) : $this->getSelectionColumn($part['column']);
+            $initial_sql = $this->_quoteIdentifier($column);
             $sql = (isset($part['special']) && $part['special'] != '') ? $part['special'] . "({$initial_sql})" : $initial_sql;
 
             if (is_null($part['value']) && !in_array($part['operator'], array(self::DB_IS_NOT_NULL, self::DB_IS_NULL))) {
@@ -948,7 +956,7 @@
                 $groups = array();
                 foreach ($this->sort_groups as $a_group) {
                     $column_name = $this->getSelectionColumn($a_group['column']);
-                    $groups[] = $column_name . ' ' . $a_group['sort'];
+                    $groups[] = $this->_quoteIdentifier($column_name) . ' ' . $a_group['sort'];
                     if ($this->action == 'count') {
                         $group_columns[$column_name] = $column_name;
                     }
@@ -959,7 +967,7 @@
                     foreach ($this->sort_orders as $a_sort) {
                         $column_name = $this->getSelectionColumn($a_sort['column']);
                         if (!array_key_exists($column_name, $group_columns)) {
-                            $sort_groups[] = $column_name . ' ';
+                            $sort_groups[] = $this->_quoteIdentifier($column_name) . ' ';
                         }
                     }
                     $sql .= join(', ', $sort_groups);
@@ -971,11 +979,11 @@
                     if (is_array($a_sort['sort'])) {
                         $subsort_sqls = array();
                         foreach ($a_sort['sort'] as $sort_elm) {
-                            $subsort_sqls[] = $this->getSelectionColumn($a_sort['column']) . '=' . $sort_elm;
+                            $subsort_sqls[] = $this->_quoteIdentifier($this->getSelectionColumn($a_sort['column'])) . '=' . $sort_elm;
                         }
                         $sort_sqls[] = join(',', $subsort_sqls);
                     } else {
-                        $sort_sqls[] = $this->getSelectionColumn($a_sort['column']) . ' ' . $a_sort['sort'];
+                        $sort_sqls[] = $this->_quoteIdentifier($this->getSelectionColumn($a_sort['column'])) . ' ' . $a_sort['sort'];
                     }
                 }
                 $sql .= ' ORDER BY ' . join(', ', $sort_sqls);
@@ -997,10 +1005,14 @@
          */
         protected function _generateJoinSQL()
         {
-            $sql = ' FROM ' . Core::getTablePrefix() . $this->fromtable->getB2DBName() . ' ' . $this->fromtable->getB2DBAlias();
+            $tablename = Core::getTablePrefix() . $this->fromtable->getB2DBName();
+            $tablealias = $this->fromtable->getB2DBAlias();
+            $sql = ' FROM ' . $this->_quoteIdentifier($tablename) . ' ' . $this->_quoteIdentifier($tablealias);
             foreach ($this->jointables as $a_jt) {
-                $sql .= ' ' . $a_jt['jointype'] . ' ' . Core::getTablePrefix() . $a_jt['jointable']->getB2DBName() . ' ' . $a_jt['jointable']->getB2DBAlias();
-                $sql .= ' ON (' . $a_jt['col1'] . self::DB_EQUALS . $a_jt['col2'];
+                $jointable = Core::getTablePrefix() . $a_jt['jointable']->getB2DBName();
+                $joinalias = $a_jt['jointable']->getB2DBAlias();
+                $sql .= ' ' . $a_jt['jointype'] . ' ' . $this->_quoteIdentifier($jointable) . ' ' . $this->_quoteIdentifier($joinalias);
+                $sql .= ' ON (' . $this->_quoteIdentifier($a_jt['col1']) . self::DB_EQUALS . $this->_quoteIdentifier($a_jt['col2']);
                 foreach ($a_jt['criterias'] as $a_crit) {
                     $sql .= ' AND ';
                     $a_crit = new Criterion($a_crit[0], $a_crit[1]);
