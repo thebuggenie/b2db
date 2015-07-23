@@ -1,4 +1,4 @@
-b2db
-====
+B2DB PHP ORM
+============
 
-b2db
+B2DB is a lightweight ORM that works MySQL, MariaDB, Postgres and MSSQL 
