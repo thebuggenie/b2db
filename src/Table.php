@@ -803,18 +803,17 @@
             switch (Core::getDBtype()) {
                 case 'pgsql':
                     $default_definition = $this->_getColumnDefaultDefinitionSQL($details);
-                    if (!$default_definition) {
-                        $sql = '';
-                    } else {
+                    if ($default_definition) {
                         $sql = 'ALTER TABLE ' . $this->_getTableNameSQL();
                         $qc = $this->getQC();
                         $sql .= " ALTER COLUMN $qc" . $this->_getRealColumnFieldName($details['name']) . "$qc SET";
                         $sql .= $default_definition;
+                        return $sql;
                     }
                     break;
+                default:
+                    return '';
             }
-
-            return $sql;
         }
 
         protected function _getDropColumnSQL($column)
@@ -864,7 +863,8 @@
                 if (in_array($column, $dropped_columns)) continue;
 
                 $sqls[] = $this->_getAlterColumnSQL($new_columns[$column]);
-                $sqls[] = $this->_getAlterColumnDefaultSQL($new_columns[$column]);
+                $altersql = $this->_getAlterColumnDefaultSQL($new_columns[$column]);
+                if ($altersql) $sqls[] = $altersql;
             }
             foreach ($dropped_columns as $details) {
                 $sqls[] = $this->_getDropColumnSQL($details);
