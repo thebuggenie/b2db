@@ -61,6 +61,8 @@
 
         protected static $_aliascnt = 0;
 
+        protected static $_cache_entities = true;
+
         protected static $_transaction_active = false;
 
         protected static $_tables = array();
@@ -160,6 +162,8 @@
                     self::setTablePrefix($configuration['tableprefix']);
                 if (array_key_exists('debug', $configuration))
                     self::setDebugMode((bool) $configuration['debug']);
+                if (array_key_exists('caching', $configuration))
+                    self::setCacheEntities((bool) $configuration['caching']);
 
                 self::$_cache_object = $cache_object;
             } catch (\Exception $e) {
@@ -610,6 +614,26 @@
             } catch (Exception $e) {
                 throw $e;
             }
+        }
+
+        /**
+         * Return entity caching on/off
+         *
+         * @return boolean
+         */
+        public static function getCacheEntities()
+        {
+            return self::$_cache_entities;
+        }
+
+        /**
+         * Set entity caching on/off
+         *
+         * @param boolean $caching
+         */
+        public static function setCacheEntities($caching)
+        {
+            self::$_cache_entities = $caching;
         }
 
         /**

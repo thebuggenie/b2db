@@ -1028,7 +1028,9 @@
 
         public function cacheB2DBObject($id, $object)
         {
-            $this->_cached_entities[$id] = $object;
+            if (Core::getCacheEntities()) {
+                $this->_cached_entities[$id] = $object;
+            }
         }
 
         public function hasCachedB2DBObject($id)
