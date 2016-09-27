@@ -112,7 +112,11 @@
 
         const SORT_ASC = 'asc';
 
+        const SORT_ASC_NUMERIC = 'asc_numeric';
+
         const SORT_DESC = 'desc';
+
+        const SORT_DESC_NUMERIC = 'desc_numeric';
 
         /**
          * Constructor
@@ -983,7 +987,13 @@
                         }
                         $sort_sqls[] = join(',', $subsort_sqls);
                     } else {
-                        $sort_sqls[] = $this->_quoteIdentifier($this->getSelectionColumn($a_sort['column'])) . ' ' . $a_sort['sort'];
+                        $sort_sql = $this->_quoteIdentifier($this->getSelectionColumn($a_sort['column']));
+                        if (in_array($a_sort['sort'], array(self::SORT_ASC_NUMERIC, self::SORT_DESC_NUMERIC))) {
+                            $sort_sql .= '+0 ' . substr($a_sort['sort'], 0, -8);
+                        } else {
+                            $sort_sql .= ' ' . $a_sort['sort'];
+                        }
+                        $sort_sqls[] = $sort_sql;
                     }
                 }
                 $sql .= ' ORDER BY ' . join(', ', $sort_sqls);
