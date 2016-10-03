@@ -281,8 +281,11 @@
 
         final public function delete()
         {
+            $id = $this->getB2DBID();
+
             $this->_preDelete();
-            self::getB2DBTable()->doDeleteById($this->getB2DBID());
+            self::getB2DBTable()->doDeleteById($id);
+            $this->getB2DBTable()->deleteB2DBObjectFromCache($id);
             $this->_postDelete();
         }
 

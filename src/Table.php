@@ -525,6 +525,8 @@
             $crit->addWhere($this->id_column, $id);
             $crit->generateDeleteSQL();
 
+            $this->deleteB2DBObjectFromCache($id);
+
             return Statement::getPreparedStatement($crit)->performQuery();
         }
 
@@ -1030,6 +1032,13 @@
         {
             if (Core::getCacheEntities()) {
                 $this->_cached_entities[$id] = $object;
+            }
+        }
+
+        public function deleteB2DBObjectFromCache($id)
+        {
+            if ($this->hasCachedB2DBObject($id)) {
+                unset($this->_cached_entities[$id]);
             }
         }
 
