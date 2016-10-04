@@ -471,7 +471,10 @@
 
             $statement = Statement::getPreparedStatement($crit);
 
-            return $statement->performQuery();
+            $value = $statement->performQuery();
+            $this->clearB2DBCachedObjects();
+
+            return $value;
         }
 
         /**
@@ -491,7 +494,10 @@
 
             $statement = Statement::getPreparedStatement($crit);
 
-            return $statement->performQuery();
+            $value = $statement->performQuery();
+            $this->deleteB2DBObjectFromCache($id);
+
+            return $value;
         }
 
         /**
@@ -508,7 +514,10 @@
 
             $statement = Statement::getPreparedStatement($crit);
 
-            return $statement->performQuery();
+            $value = $statement->performQuery();
+            $this->clearB2DBCachedObjects();
+
+            return $value;
         }
 
         /**
@@ -1045,6 +1054,11 @@
         public function hasCachedB2DBObject($id)
         {
             return array_key_exists($id, $this->_cached_entities);
+        }
+
+        public function clearB2DBCachedObjects()
+        {
+            $this->_cached_entities = [];
         }
 
         public function getB2DBCachedObject($id)
