@@ -233,10 +233,10 @@
             return self::$_tables[$tablename];
         }
 
-        protected static function getRelevantDebugBacktraceElement()
+        protected static function getRelevantDebugBacktraceElement($backtrace = null)
         {
             $trace = null;
-            $backtrace = debug_backtrace();
+            $backtrace = ($backtrace !== null) ? $backtrace : debug_backtrace();
             $reserved_names = array('Core.php', 'Saveable.php', 'Criteria.php', 'Criterion.php', 'Resultset.php', 'Row.php', 'Statement.php', 'Transaction.php', 'Criteria.php', 'B2DBCriterion.php', 'Row.php', 'Statement.php', 'Transaction.php', 'Table.php');
 
             foreach ($backtrace as $t) {
@@ -291,9 +291,20 @@
             $sql = $statement->printSQL();
             $values = ($statement->getCriteria() instanceof Criteria) ? $statement->getCriteria()->getValues() : array();
 
-            $trace = self::getRelevantDebugBacktraceElement();
+            $backtrace = debug_backtrace();
+            $trace = self::getRelevantDebugBacktraceElement($backtrace);
+            $traces = [];
+            foreach ($backtrace as $trace_item) {
+                $traces[] = [
+                    'file' => (isset($trace_item['file'])) ? $trace_item['file'] : null,
+                    'line' => (isset($trace_item['line'])) ? $trace_item['line'] : null,
+                    'function' => $trace_item['function'],
+                    'class' => (isset($trace_item['class'])) ? $trace_item['class'] : null,
+                    'type' => (isset($trace_item['type'])) ? $trace_item['type'] : null
+                ];
+            }
 
-            self::$_sqlhits[] = array('sql' => $sql, 'values' => implode(', ', $values), 'time' => $time, 'filename' => $trace['file'], 'line' => $trace['line'], 'function' => $trace['function'], 'class' => (isset($trace['class']) ? $trace['class'] : 'unknown'), 'type' => (isset($trace['type']) ? $trace['type'] : 'unknown'), 'arguments' => $trace['args']);
+            self::$_sqlhits[] = array('sql' => $sql, 'values' => implode(', ', $values), 'time' => $time, 'filename' => $trace['file'], 'line' => $trace['line'], 'function' => $trace['function'], 'class' => (isset($trace['class']) ? $trace['class'] : 'unknown'), 'type' => (isset($trace['type']) ? $trace['type'] : 'unknown'), 'arguments' => $trace['args'], 'backtrace' => $traces);
             self::$_sqltiming += $time;
         }
 
