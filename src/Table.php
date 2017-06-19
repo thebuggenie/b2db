@@ -1040,30 +1040,65 @@
         public function cacheB2DBObject($id, $object)
         {
             if (Core::getCacheEntities()) {
-                $this->_cached_entities[$id] = $object;
+                switch (Core::getCacheEntitiesStrategy()) {
+                    case Core::CACHE_TYPE_INTERNAL:
+                        $this->_cached_entities[$id] = $object;
+                        break;
+
+                    case Core::CACHE_TYPE_MEMCACHED:
+                        Core::getCacheEntitiesObject()->set('b2db.' . get_called_class() . '.' . $id, $object);
+                        break;
+                }
             }
         }
 
         public function deleteB2DBObjectFromCache($id)
         {
             if ($this->hasCachedB2DBObject($id)) {
-                unset($this->_cached_entities[$id]);
+                switch (Core::getCacheEntitiesStrategy()) {
+                    case Core::CACHE_TYPE_INTERNAL:
+                        unset($this->_cached_entities[$id]);
+                        break;
+
+                    case Core::CACHE_TYPE_MEMCACHED:
+                        Core::getCacheEntitiesObject()->delete('b2db.' . get_called_class() . '.' . $id);
+                        break;
+                }
             }
         }
 
         public function hasCachedB2DBObject($id)
         {
-            return array_key_exists($id, $this->_cached_entities);
+            switch (Core::getCacheEntitiesStrategy()) {
+                case Core::CACHE_TYPE_INTERNAL:
+                    return array_key_exists($id, $this->_cached_entities);
+
+                case Core::CACHE_TYPE_MEMCACHED:
+                    return Core::getCacheEntitiesObject()->has('b2db.' . get_called_class() . '.' . $id);
+            }
         }
 
         public function clearB2DBCachedObjects()
         {
-            $this->_cached_entities = [];
+            switch (Core::getCacheEntitiesStrategy()) {
+                case Core::CACHE_TYPE_INTERNAL:
+                    $this->_cached_entities = [];
+                    break;
+
+                case Core::CACHE_TYPE_MEMCACHED:
+                    Core::getCacheEntitiesObject()->flush();
+            }
         }
 
         public function getB2DBCachedObject($id)
         {
-            return $this->_cached_entities[$id];
+            switch (Core::getCacheEntitiesStrategy()) {
+                case Core::CACHE_TYPE_INTERNAL:
+                    return $this->_cached_entities[$id];
+
+                case Core::CACHE_TYPE_MEMCACHED:
+                    return Core::getCacheEntitiesObject()->get('b2db.' . get_called_class() . '.' . $id);
+            }
         }
 
     }

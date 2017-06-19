@@ -4,8 +4,7 @@
 
     use PDO,
         PDOException,
-        ReflectionClass,
-        ReflectionProperty;
+        ReflectionClass;
 
     /**
      * B2DB Core class
@@ -25,6 +24,9 @@
      */
     class Core
     {
+
+        const CACHE_TYPE_INTERNAL = 'internal';
+        const CACHE_TYPE_MEMCACHED = 'memcached';
 
         /**
          * PDO object
@@ -62,6 +64,10 @@
         protected static $_aliascnt = 0;
 
         protected static $_cache_entities = true;
+
+        protected static $_cache_entities_strategy = self::CACHE_TYPE_INTERNAL;
+
+        protected static $_cache_entities_object;
 
         protected static $_transaction_active = false;
 
@@ -645,6 +651,50 @@
         public static function setCacheEntities($caching)
         {
             self::$_cache_entities = $caching;
+        }
+
+        /**
+         * Set entity caching strategy
+         *
+         * @param string $strategy
+         *
+         * @see self::CACHE_TYPE_INTERNAL
+         * @see self::CACHE_TYPE_MEMCACHED
+         */
+        public static function setCacheEntitiesStrategy($strategy)
+        {
+            self::$_cache_entities_strategy = $strategy;
+        }
+
+        /**
+         * Retrieve entitiy caching strategy
+         *
+         * @return string
+         *
+         * @see self::CACHE_TYPE_INTERNAL
+         * @see self::CACHE_TYPE_MEMCACHED
+         */
+        public static function getCacheEntitiesStrategy()
+        {
+            return self::$_cache_entities_strategy;
+        }
+
+        /**
+         * Set the cache object
+         *
+         * @param interfaces\Cache $object
+         */
+        public static function setCacheEntitiesObject(interfaces\Cache $object)
+        {
+            self::$_cache_entities_object = $object;
+        }
+
+        /**
+         * @return interfaces\Cache
+         */
+        public static function getCacheEntitiesObject()
+        {
+            return self::$_cache_entities_object;
         }
 
         /**
