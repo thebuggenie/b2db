@@ -273,7 +273,7 @@
             $res_id = self::getB2DBTable()->saveObject($this);
             $this->_b2dbResetInitialValues();
             $this->_id = $res_id;
-            if ($is_new) {
+            if ($is_new || Core::getCacheEntitiesStrategy() == Core::CACHE_TYPE_MEMCACHED) {
                 $this->getB2DBTable()->cacheB2DBObject($res_id, $this);
             }
             $this->_postSave($is_new);
