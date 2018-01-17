@@ -21,7 +21,7 @@
 
                 if (array_key_exists(1, $ad_info)) {
                     switch (true) {
-                        case (in_array($ad_info[1][0], array('"', "'")) && in_array($ad_info[1][count($ad_info[1]) - 1], array('"', "'"))):
+                        case (in_array($ad_info[1][0], array('"', "'")) && in_array($ad_info[1][strlen($ad_info[1]) - 1], array('"', "'"))):
                             $value = trim(str_replace(array('"', "'"), array('', ''), $ad_info[1]));
                             break;
                         case (in_array($ad_info[1], array('true', 'false'))):
