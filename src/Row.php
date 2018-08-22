@@ -90,6 +90,9 @@
 
         public function offsetExists($offset)
         {
+            if (strpos($offset, '.') === false)
+                return (bool) array_key_exists($offset, $this->_fields);
+
             $column = $this->_getColumnName($offset);
             return (bool) array_key_exists($this->_statement->getCriteria()->getSelectionAlias($column), $this->_fields);
         }
