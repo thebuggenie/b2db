@@ -444,7 +444,7 @@
                 }
             }
 
-            list($table_name, $column_name) = explode('.', $column);
+            list($table_name, $column_name) = (strpos($column, '.') !== false) ? explode('.', $column) : [$this->fromtable->getB2DBName(), $column];
             if ($join_column === null) {
                 if ($this->fromtable->getB2DBAlias() == $table_name || $this->fromtable->getB2DBName() == $table_name) {
                     return $this->fromtable->getB2DBAlias() . '.' . $column_name;
