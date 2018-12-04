@@ -198,7 +198,7 @@
         protected function getQC()
         {
             $qc = '`';
-            switch (Core::getDBtype()) {
+            switch (Core::getDriver()) {
                 case 'pgsql':
                     $qc = '"';
                     break;
@@ -571,7 +571,7 @@
                     foreach ($details['columns'] as $column) {
                         $index_column_sqls[] = $qc . $this->_getRealColumnFieldName($column) . $qc;
                     }
-                    switch (Core::getDBtype()) {
+                    switch (Core::getDriver()) {
                         case 'pgsql':
                             $sql = " CREATE INDEX " . Core::getTablePrefix() . $this->b2db_name . "_{$index_name} ON " . $this->_getTableNameSQL() . " (".join(', ', $index_column_sqls).')';
                             break;
@@ -706,14 +706,14 @@
             $fsql = '';
             switch ($column['type']) {
                 case 'integer':
-                    if (Core::getDBtype() == 'pgsql' && isset($column['auto_inc']) && $column['auto_inc'] == true) {
+                    if (Core::getDriver() == 'pgsql' && isset($column['auto_inc']) && $column['auto_inc'] == true) {
                         $fsql .= 'SERIAL';
-                    } elseif (Core::getDBtype() == 'pgsql') {
+                    } elseif (Core::getDriver() == 'pgsql') {
                         $fsql .= 'INTEGER';
                     } else {
                         $fsql .= 'INTEGER(' . $column['length'] . ')';
                     }
-                    if ($column['unsigned'] && Core::getDBtype() != 'pgsql')
+                    if ($column['unsigned'] && Core::getDriver() != 'pgsql')
                         $fsql .= ' UNSIGNED';
                     break;
                 case 'varchar':
@@ -724,13 +724,13 @@
                     break;
                 case 'float':
                     $fsql .= 'FLOAT(' . $column['precision'] . ')';
-                    if ($column['unsigned'] && Core::getDBtype() != 'pgsql')
+                    if ($column['unsigned'] && Core::getDriver() != 'pgsql')
                         $fsql .= ' UNSIGNED';
                     break;
                 case 'blob':
-                    if (Core::getDBtype() == 'mysql') {
+                    if (Core::getDriver() == 'mysql') {
                         $fsql .= 'LONGBLOB';
-                    } elseif (Core::getDBtype() == 'pgsql') {
+                    } elseif (Core::getDriver() == 'pgsql') {
                         $fsql .= 'BYTEA';
                     } else {
                         $fsql .= 'BLOB';
@@ -744,9 +744,9 @@
             if ($column['not_null'])
                 $fsql .= ' NOT NULL';
             if ($column['type'] != 'text') {
-                if (isset($column['auto_inc']) && $column['auto_inc'] == true && Core::getDBtype() != 'pgsql') {
+                if (isset($column['auto_inc']) && $column['auto_inc'] == true && Core::getDriver() != 'pgsql') {
                     $fsql .= ' AUTO_INCREMENT';
-                } elseif (isset($column['default_value']) && $column['default_value'] !== null && !(Core::getDBtype() == 'pgsql' && $alter) && !(isset($column['auto_inc']) && $column['auto_inc'] == true && Core::getDBtype() == 'pgsql')) {
+                } elseif (isset($column['default_value']) && $column['default_value'] !== null && !(Core::getDriver() == 'pgsql' && $alter) && !(isset($column['auto_inc']) && $column['auto_inc'] == true && Core::getDriver() == 'pgsql')) {
                     $fsql .= $this->_getColumnDefaultDefinitionSQL($column);
                 }
             }
@@ -774,9 +774,9 @@
             $sql .= join(",\n", $field_sql);
             $sql .= ", PRIMARY KEY ($qc" . $this->_getRealColumnFieldName($this->id_column) . "$qc) ";
             $sql .= ') ';
-            if (Core::getDBtype() != 'pgsql')
+            if (Core::getDriver() != 'pgsql')
                 $sql .= 'AUTO_INCREMENT=' . $this->_autoincrement_start_at . ' ';
-            if (Core::getDBtype() != 'pgsql')
+            if (Core::getDriver() != 'pgsql')
                 $sql .= 'CHARACTER SET ' . $this->_charset;
 
             return $sql;
@@ -796,7 +796,7 @@
         {
             $sql = 'ALTER TABLE ' . $this->_getTableNameSQL();
             $qc = $this->getQC();
-            switch (Core::getDBtype()) {
+            switch (Core::getDriver()) {
                 case 'mysql':
                     $sql .= " MODIFY $qc" . $this->_getRealColumnFieldName($details['name']) . "$qc ";
                     break;
@@ -811,7 +811,7 @@
 
         protected function _getAlterColumnDefaultSQL($details)
         {
-            switch (Core::getDBtype()) {
+            switch (Core::getDriver()) {
                 case 'pgsql':
                     $default_definition = $this->_getColumnDefaultDefinitionSQL($details);
                     if ($default_definition) {

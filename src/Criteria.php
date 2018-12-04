@@ -642,9 +642,9 @@
         protected function _addValue($value)
         {
             if (is_bool($value)) {
-                if (Core::getDBtype() == 'mysql') {
+                if (Core::getDriver() == 'mysql') {
                     $this->values[] = (int) $value;
-                } elseif (Core::getDBtype() == 'pgsql') {
+                } elseif (Core::getDriver() == 'pgsql') {
                     $this->values[] = ($value) ? 'true' : 'false';
                 }
             } else {
@@ -716,7 +716,7 @@
         {
             $parts = array();
             foreach (explode('.', $id) as $part) {
-                switch (Core::getDBtype()) {
+                switch (Core::getDriver()) {
                 case 'mysql':
                     $parts[] = "`$part`";
                     break;
@@ -797,7 +797,7 @@
             $sql = ($this->distinct) ? 'SELECT DISTINCT ' : 'SELECT ';
 
             if ($this->customsel) {
-                if ($this->distinct && Core::getDBtype() == 'pgsql') {
+                if ($this->distinct && Core::getDriver() == 'pgsql') {
                     foreach ($this->sort_orders as $a_sort) {
                         $this->addSelectionColumn($a_sort['column']);
                     }

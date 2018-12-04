@@ -35,17 +35,17 @@
          */
         protected static $_db_connection = null;
 
-        protected static $_db_host;
+        protected static $_hostname;
 
-        protected static $_db_uname;
+        protected static $_username;
 
-        protected static $_db_pwd;
+        protected static $_password;
 
-        protected static $_db_name;
+        protected static $_database_name;
 
-        protected static $_db_type;
+        protected static $_driver;
 
-        protected static $_db_port;
+        protected static $_port;
 
         protected static $_dsn;
 
@@ -77,6 +77,9 @@
 
         protected static $_debug_logging = null;
 
+	    /**
+	     * @var interfaces\Cache
+	     */
         protected static $_cache_object = null;
 
         protected static $_cache_dir;
@@ -153,17 +156,17 @@
                 if (array_key_exists('dsn', $configuration) && $configuration['dsn'])
                     self::setDSN($configuration['dsn']);
                 if (array_key_exists('driver', $configuration) && $configuration['driver'])
-                    self::setDBtype($configuration['driver']);
+                    self::setDriver($configuration['driver']);
                 if (array_key_exists('hostname', $configuration) && $configuration['hostname'])
-                    self::setHost($configuration['hostname']);
+                    self::setHostname($configuration['hostname']);
                 if (array_key_exists('port', $configuration) && $configuration['port'])
                     self::setPort($configuration['port']);
                 if (array_key_exists('username', $configuration) && $configuration['username'])
-                    self::setUname($configuration['username']);
+                    self::setUsername($configuration['username']);
                 if (array_key_exists('password', $configuration) && $configuration['password'])
-                    self::setPasswd($configuration['password']);
+                    self::setPassword($configuration['password']);
                 if (array_key_exists('database', $configuration) && $configuration['database'])
-                    self::setDBname($configuration['database']);
+                    self::setDatabaseName($configuration['database']);
                 if (array_key_exists('tableprefix', $configuration) && $configuration['tableprefix'])
                     self::setTablePrefix($configuration['tableprefix']);
                 if (array_key_exists('debug', $configuration))
@@ -171,7 +174,13 @@
                 if (array_key_exists('caching', $configuration))
                     self::setCacheEntities((bool) $configuration['caching']);
 
-                self::$_cache_object = $cache_object;
+                if ($cache_object !== null) {
+                	if (is_callable($cache_object)) {
+		                self::$_cache_object = call_user_func($cache_object);
+	                } else {
+		                self::$_cache_object = $cache_object;
+	                }
+                }
             } catch (\Exception $e) {
                 throw $e;
             }
@@ -184,7 +193,7 @@
          */
         public static function isInitialized()
         {
-            return (bool) (self::getDBtype() != '' && self::getUname() != '');
+            return (bool) (self::getDriver() != '' && self::getUsername() != '');
         }
 
         /**
@@ -206,11 +215,11 @@
         public static function saveConnectionParameters($bootstrap_location)
         {
             $string = "b2db:\n";
-            $string .= "    username: " . self::getUname() . "\n";
-            $string .= "    password: \"" . self::getPasswd() . "\"\n";
+            $string .= "    driver: " . self::getDriver() . "\n";
+            $string .= "    username: " . self::getUsername() . "\n";
+            $string .= "    password: \"" . self::getPassword() . "\"\n";
             $string .= '    dsn: "' . self::getDSN() . "\"\n";
             $string .= "    tableprefix: '" . self::getTablePrefix() . "'\n";
-            $string .= "    cacheclass: 'TBGCache'\n";
             $string .= "\n";
             try {
                 if (file_put_contents($bootstrap_location, $string) === false) {
@@ -395,7 +404,7 @@
                 throw new Exception('This does not look like a valid DSN - cannot read the database type');
             }
             try {
-                self::setDBtype($dsn_details['scheme']);
+                self::setDriver($dsn_details['scheme']);
                 $details = explode(';', $dsn_details['path']);
                 foreach ($details as $detail) {
                     $detail_info = explode('=', $detail);
@@ -404,13 +413,13 @@
                     }
                     switch ($detail_info[0]) {
                         case 'host':
-                            self::setHost($detail_info[1]);
+                            self::setHostname($detail_info[1]);
                             break;
                         case 'port':
                             self::setPort($detail_info[1]);
                             break;
                         case 'dbname':
-                            self::setDBname($detail_info[1]);
+                            self::setDatabaseName($detail_info[1]);
                             break;
                     }
                 }
@@ -425,11 +434,11 @@
          */
         protected static function _generateDSN()
         {
-            $dsn = self::getDBtype() . ":host=" . self::getHost();
+            $dsn = self::getDriver() . ":host=" . self::getHostname();
             if (self::getPort()) {
                 $dsn .= ';port=' . self::getPort();
             }
-            $dsn .= ';dbname=' . self::getDBname();
+            $dsn .= ';dbname=' . self::getDatabaseName();
             self::$_dsn = $dsn;
         }
 
@@ -449,11 +458,11 @@
         /**
          * Set the database host
          *
-         * @param string $host
+         * @param string $hostname
          */
-        public static function setHost($host)
+        public static function setHostname($hostname)
         {
-            self::$_db_host = $host;
+            self::$_hostname = $hostname;
         }
 
         /**
@@ -461,9 +470,9 @@
          *
          * @return string
          */
-        public static function getHost()
+        public static function getHostname()
         {
-            return self::$_db_host;
+            return self::$_hostname;
         }
 
         /**
@@ -473,7 +482,7 @@
          */
         public static function getPort()
         {
-            return self::$_db_port;
+            return self::$_port;
         }
 
         /**
@@ -483,17 +492,17 @@
          */
         public static function setPort($port)
         {
-            self::$_db_port = $port;
+            self::$_port = $port;
         }
 
         /**
          * Set database username
          *
-         * @param string $uname
+         * @param string $username
          */
-        public static function setUname($uname)
+        public static function setUsername($username)
         {
-            self::$_db_uname = $uname;
+            self::$_username = $username;
         }
 
         /**
@@ -501,9 +510,9 @@
          *
          * @return string
          */
-        public static function getUname()
+        public static function getUsername()
         {
-            return self::$_db_uname;
+            return self::$_username;
         }
 
         /**
@@ -529,11 +538,11 @@
         /**
          * Set the database password
          *
-         * @param string $upwd
+         * @param string $password
          */
-        public static function setPasswd($upwd)
+        public static function setPassword($password)
         {
-            self::$_db_pwd = $upwd;
+            self::$_password = $password;
         }
 
         /**
@@ -541,19 +550,19 @@
          *
          * @return string
          */
-        public static function getPasswd()
+        public static function getPassword()
         {
-            return self::$_db_pwd;
+            return self::$_password;
         }
 
         /**
          * Set the database name
          *
-         * @param string $dbname
+         * @param string $database_name
          */
-        public static function setDBname($dbname)
+        public static function setDatabaseName($database_name)
         {
-            self::$_db_name = $dbname;
+            self::$_database_name = $database_name;
             self::$_dsn = null;
         }
 
@@ -562,22 +571,22 @@
          *
          * @return string
          */
-        public static function getDBname()
+        public static function getDatabaseName()
         {
-            return self::$_db_name;
+            return self::$_database_name;
         }
 
         /**
          * Set the database type
          *
-         * @param string $dbtype
+         * @param string $driver
          */
-        public static function setDBtype($dbtype)
+        public static function setDriver($driver)
         {
-            if (self::hasDBEngine($dbtype) == false) {
-                throw new Exception('The selected database is not supported: "' . $dbtype . '".');
+            if (self::isDriverSupported($driver) == false) {
+                throw new Exception('The selected database is not supported: "' . $driver . '".');
             }
-            self::$_db_type = $dbtype;
+            self::$_driver = $driver;
         }
 
         /**
@@ -585,17 +594,14 @@
          *
          * @return string
          */
-        public static function getDBtype()
+        public static function getDriver()
         {
-            if (!self::$_db_type && defined('B2DB_SQLTYPE')) {
-                self::setDBtype(B2DB_SQLTYPE);
-            }
-            return self::$_db_type;
+            return self::$_driver;
         }
 
-        public static function hasDBtype()
+        public static function hasDriver()
         {
-            return (bool) (self::getDBtype() != '');
+            return (bool) (self::getDriver() != '');
         }
 
         /**
@@ -607,8 +613,8 @@
                 throw new Exception('B2DB needs the PDO PHP libraries installed. See http://php.net/PDO for more information.');
             }
             try {
-                $uname = self::getUname();
-                $pwd = self::getPasswd();
+                $uname = self::getUsername();
+                $pwd = self::getPassword();
                 $dsn = self::getDSN();
                 if (self::$_db_connection instanceof PDO) {
                     self::$_db_connection = null;
@@ -617,7 +623,7 @@
                 if (!self::$_db_connection instanceof PDO) {
                     throw new Exception('Could not connect to the database, but not caught by PDO');
                 }
-		switch (self::getDBtype())
+		switch (self::getDriver())
 		{
 		  case 'mysql':
 		    self::getDBLink()->query('SET NAMES UTF8');
@@ -757,14 +763,14 @@
          *
          * @return array
          */
-        public static function getDBtypes()
+        public static function getDrivers()
         {
-            $retarr = array();
+            $drivers = array();
 
             if (class_exists('\PDO')) {
-                $retarr['mysql'] = 'MySQL';
-                $retarr['pgsql'] = 'PostgreSQL';
-                $retarr['mssql'] = 'Microsoft SQL Server';
+                $drivers['mysql'] = 'MySQL';
+                $drivers['pgsql'] = 'PostgreSQL';
+                $drivers['mssql'] = 'Microsoft SQL Server';
                 /*
                   $retarr['sqlite'] = 'SQLite';
                   $retarr['sybase'] = 'Sybase';
@@ -777,7 +783,7 @@
                 throw new Exception('You need to have PHP PDO installed to be able to use B2DB');
             }
 
-            return $retarr;
+            return $drivers;
         }
 
         /**
@@ -787,16 +793,15 @@
          *
          * @return boolean
          */
-        public static function hasDBEngine($driver)
+        public static function isDriverSupported($driver)
         {
-            return array_key_exists($driver, self::getDBtypes());
+            return array_key_exists($driver, self::getDrivers());
         }
 
         protected static function storeCachedTableClass($classname)
         {
-            $key = 'b2db_cache_' . $classname;
-            self::$_cache_object->add($key, self::$_cached_table_classes[$classname]);
-            self::$_cache_object->fileAdd($key, self::$_cached_table_classes[$classname]);
+            $key = 'b2db_cache_' . str_replace(['/', '\\'], ['_', '_'], $classname);
+            self::$_cache_object->set($key, self::$_cached_table_classes[$classname]);
         }
 
         protected static function cacheTableClass($classname)
@@ -838,9 +843,8 @@
 
         protected static function storeCachedEntityClass($classname)
         {
-            $key = 'b2db_cache_' . $classname;
-            self::$_cache_object->add($key, self::$_cached_entity_classes[$classname]);
-            self::$_cache_object->fileAdd($key, self::$_cached_entity_classes[$classname]);
+            $key = 'b2db_cache_' . str_replace(['/', '\\'], ['_', '_'], $classname);
+            self::$_cache_object->set($key, self::$_cached_entity_classes[$classname]);
         }
 
         protected static function cacheEntityClass($classname, $reflection_classname = null)
@@ -936,11 +940,9 @@
         protected static function _populateCachedClassFiles($classname)
         {
             if (!array_key_exists($classname, self::$_cached_entity_classes)) {
-                $entity_key = 'b2db_cache_' . $classname;
+                $entity_key = 'b2db_cache_' . str_replace(['/', '\\'], ['_', '_'], $classname);
                 if (self::$_cache_object && self::$_cache_object->has($entity_key)) {
                     self::$_cached_entity_classes[$classname] = self::$_cache_object->get($entity_key);
-                } elseif (self::$_cache_object && self::$_cache_object->fileHas($entity_key)) {
-                    self::$_cached_entity_classes[$classname] = self::$_cache_object->fileGet($entity_key);
                 } else {
                     self::cacheEntityClass($classname);
                 }
@@ -950,11 +952,9 @@
         protected static function _populateCachedTableClassFiles($classname)
         {
             if (!array_key_exists($classname, self::$_cached_table_classes)) {
-                $key = 'b2db_cache_' . $classname;
+                $key = 'b2db_cache_' . str_replace(['/', '\\'], ['_', '_'], $classname);
                 if (self::$_cache_object && self::$_cache_object->has($key)) {
                     self::$_cached_table_classes[$classname] = self::$_cache_object->get($key);
-                } elseif (self::$_cache_object && self::$_cache_object->fileHas($key)) {
-                    self::$_cached_table_classes[$classname] = self::$_cache_object->fileGet($key);
                 } else {
                     self::cacheTableClass($classname);
                 }

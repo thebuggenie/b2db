@@ -106,9 +106,9 @@
                     \caspar\core\Logging::log('done', 'B2DB');
 
                 if ($this->getCriteria() instanceof Criteria && $this->getCriteria()->action == 'insert') {
-                    if (Core::getDBtype() == 'mysql') {
+                    if (Core::getDriver() == 'mysql') {
                         $this->insert_id = Core::getDBLink()->lastInsertId();
-                    } elseif (Core::getDBtype() == 'pgsql') {
+                    } elseif (Core::getDriver() == 'pgsql') {
                         $this->insert_id = Core::getDBLink()->lastInsertId(Core::getTablePrefix() . $this->getCriteria()->getTable()->getB2DBName() . '_id_seq');
                         if (Core::isDebugLoggingEnabled()) {
                             \caspar\core\Logging::log('sequence: ' . Core::getTablePrefix() . $this->getCriteria()->getTable()->getB2DBName() . '_id_seq', 'b2db');
