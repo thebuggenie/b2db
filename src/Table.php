@@ -2,6 +2,8 @@
 
     namespace b2db;
 
+    use b2db\interfaces\QueryInterface;
+
     /**
      * Table class
      *
@@ -21,6 +23,11 @@
     class Table
     {
 
+        protected static $column_names = [];
+
+	    /**
+	     * @var string
+	     */
         protected $b2db_name;
 
         protected $id_column;
@@ -29,17 +36,23 @@
 
         protected $_cached_entities = array();
 
-        protected $_columns;
+        protected $columns;
 
-        protected $_indexes = array();
+        protected $indexes = array();
 
-        protected $_charset = 'utf8';
+        protected $charset = 'utf8';
 
-        protected $_autoincrement_start_at = 1;
+        protected $autoincrement_start_at = 1;
 
-        protected $_foreigntables = null;
+        /**
+         * @var ForeignTable[]
+         */
+        protected $foreign_tables = null;
 
-        protected $_foreigncolumns = array();
+        /**
+         * @var Table[][]
+         */
+        protected $foreign_columns = [];
 
         public function __clone()
         {
@@ -50,28 +63,28 @@
         {
             if ($entity_class = Core::getCachedTableEntityClass('\\'.get_called_class())) {
                 if ($details = Core::getCachedTableDetails($entity_class)) {
-                    $this->_columns = $details['columns'];
-                    $this->_foreigncolumns = $details['foreign_columns'];
+                    $this->columns = $details['columns'];
+                    $this->foreign_columns = $details['foreign_columns'];
                     $this->b2db_name = $details['name'];
                     $this->b2db_alias = $details['name'] . Core::addAlias();
                     $this->id_column = $details['id'];
                 }
             } else {
-                $this->_initialize();
+                $this->initialize();
             }
         }
 
-        protected function _initialize()
+        protected function initialize()
         {
             throw new Exception('The table "\\' . get_class($this) . '" has no corresponding entity class. You must override the _initialize() method to set up the table details.');
         }
 
-        protected function _setup($b2db_name, $id_column)
+        protected function setup($b2db_name, $id_column)
         {
             $this->b2db_name = $b2db_name;
             $this->b2db_alias = $b2db_name . Core::addAlias();
             $this->id_column = $id_column;
-            $this->_addInteger($id_column, 10, 0, true, true, true);
+            $this->addInteger($id_column, 10, 0, true, true, true);
         }
 
         /**
@@ -84,46 +97,61 @@
             return Core::getTable('\\'.get_called_class());
         }
 
-        protected function _addColumn($column, $details)
+        public static function getColumnName($column)
         {
-            $this->_columns[$column] = $details;
+            if (!isset(self::$column_names[$column])) {
+                if (mb_stripos($column, '.') > 0) {
+                    self::$column_names[$column] = mb_substr($column, mb_stripos($column, '.') + 1);
+                } else {
+                    self::$column_names[$column] = $column;
+                }
+            }
+
+            return self::$column_names[$column];
         }
 
-        protected function _addInteger($column, $length = 10, $default_value = 0, $not_null = false, $auto_inc = false, $unsigned = false)
+        protected function addColumn($column, $details)
         {
-            $this->_addColumn($column, array('type' => 'integer', 'name' => $column, 'length' => $length, 'default_value' => $default_value, 'not_null' => $not_null, 'auto_inc' => $auto_inc, 'unsigned' => $unsigned));
+            $this->columns[$column] = $details;
         }
 
-        protected function _addFloat($column, $precision = 2, $default_value = 0, $not_null = false, $auto_inc = false, $unsigned = false)
+        protected function addInteger($column, $length = 10, $default_value = 0, $not_null = false, $auto_inc = false, $unsigned = false)
         {
-            $this->_addColumn($column, array('type' => 'float', 'name' => $column, 'precision' => $precision, 'default_value' => $default_value, 'not_null' => $not_null, 'auto_inc' => $auto_inc, 'unsigned' => $unsigned));
+            $this->addColumn($column, ['type' => 'integer', 'name' => $column, 'length' => $length, 'default_value' => $default_value, 'not_null' => $not_null, 'auto_inc' => $auto_inc, 'unsigned' => $unsigned]);
         }
 
-        protected function _addVarchar($column, $length = null, $default_value = null, $not_null = false)
+        protected function addFloat($column, $precision = 2, $default_value = 0, $not_null = false, $auto_inc = false, $unsigned = false)
         {
-            $this->_addColumn($column, array('type' => 'varchar', 'name' => $column, 'length' => $length, 'default_value' => $default_value, 'not_null' => $not_null));
+            $this->addColumn($column, ['type' => 'float', 'name' => $column, 'precision' => $precision, 'default_value' => $default_value, 'not_null' => $not_null, 'auto_inc' => $auto_inc, 'unsigned' => $unsigned]);
         }
 
-        protected function _addText($column, $not_null = false)
+        protected function addVarchar($column, $length = null, $default_value = null, $not_null = false)
         {
-            $this->_addColumn($column, array('type' => 'text', 'name' => $column, 'not_null' => $not_null));
+            $this->addColumn($column, ['type' => 'varchar', 'name' => $column, 'length' => $length, 'default_value' => $default_value, 'not_null' => $not_null]);
         }
 
-        protected function _addBlob($column, $not_null = false)
+        protected function addText($column, $not_null = false)
         {
-            $this->_addColumn($column, array('type' => 'blob', 'name' => $column, 'not_null' => $not_null));
+            $this->addColumn($column, ['type' => 'text', 'name' => $column, 'not_null' => $not_null]);
         }
 
-        protected function _addBoolean($column, $default_value = false, $not_null = false)
+        protected function addBlob($column, $not_null = false)
         {
-            $this->_addColumn($column, array('type' => 'boolean', 'name' => $column, 'default_value' => ($default_value) ? 1 : 0, 'not_null' => $not_null));
+            $this->addColumn($column, ['type' => 'blob', 'name' => $column, 'not_null' => $not_null]);
         }
 
-        protected function _addIndex($index_name, $columns, $index_type = null)
+        protected function addBoolean($column, $default_value = false, $not_null = false)
         {
-            if (!is_array($columns))
-                $columns = array($columns);
-            $this->_indexes[$index_name] = array('columns' => $columns, 'type' => $index_type);
+            $this->addColumn($column, ['type' => 'boolean', 'name' => $column, 'default_value' => ($default_value) ? 1 : 0, 'not_null' => $not_null]);
+        }
+
+        protected function addIndex($index_name, $columns, $index_type = null)
+        {
+            if (!is_array($columns)) {
+            	$columns = array($columns);
+            }
+
+            $this->indexes[$index_name] = ['columns' => $columns, 'type' => $index_type];
         }
 
         /**
@@ -135,37 +163,36 @@
          */
         protected function _addForeignKeyColumn($column, Table $table, $key = null)
         {
-            $addtable = clone $table;
-            $key = ($key !== null) ? $key : $addtable->getIdColumn();
-            $foreign_column = $addtable->getColumn($key);
+            $add_table = clone $table;
+            $key = ($key !== null) ? $key : $add_table->getIdColumn();
+            $foreign_column = $add_table->getColumn($key);
             switch ($foreign_column['type']) {
                 case 'integer':
-                    $this->_addInteger($column, $foreign_column['length'], $foreign_column['default_value'], false, false, $foreign_column['unsigned']);
+                    $this->addInteger($column, $foreign_column['length'], $foreign_column['default_value'], false, false, $foreign_column['unsigned']);
                     break;
                 case 'float':
-                    $this->_addFloat($column, $foreign_column['precision'], $foreign_column['default_value'], false, false, $foreign_column['unsigned']);
+                    $this->addFloat($column, $foreign_column['precision'], $foreign_column['default_value'], false, false, $foreign_column['unsigned']);
                     break;
                 case 'varchar':
-                    $this->_addVarchar($column, $foreign_column['length'], $foreign_column['default_value'], false);
+                    $this->addVarchar($column, $foreign_column['length'], $foreign_column['default_value'], false);
                     break;
                 case 'text':
-//					$this->_addText($column, $foreign_column['default_value'], false);
-//					break;
                 case 'boolean':
                 case 'blob':
                     throw new Exception('Cannot use a text, blob or boolean column as a foreign key');
             }
-            //$this->_foreigntables[$addtable->getB2DBAlias()] = array('table' => $addtable, 'key' => $key, 'column' => $column);
-            $this->_foreigncolumns[$column] = array('class' => '\\'.get_class($table), 'key' => $key, 'name' => $column);
+            $this->foreign_columns[$column] = array('class' => '\\'.get_class($table), 'key' => $key, 'name' => $column);
         }
 
+        /**
+         * @param $column
+         * @return ForeignTable
+         */
         public function getForeignTableByLocalColumn($column)
         {
-            if (is_array($this->_foreigntables)) {
-                foreach ($this->_foreigntables as $foreign_table) {
-                    if ($foreign_table['column'] == $column) {
-                        return $foreign_table;
-                    }
+            foreach ($this->getForeignTables() as $joined_table) {
+                if ($joined_table->getColumn() == $column) {
+                    return $joined_table;
                 }
             }
         }
@@ -182,7 +209,7 @@
          */
         public function setCharset($charset)
         {
-            $this->_charset = $charset;
+            $this->charset = $charset;
         }
 
         /**
@@ -192,14 +219,14 @@
          */
         public function setAutoIncrementStart($start_at)
         {
-            $this->_autoincrement_start_at = $start_at;
+            $this->autoincrement_start_at = $start_at;
         }
 
         protected function getQC()
         {
             $qc = '`';
             switch (Core::getDriver()) {
-                case 'pgsql':
+	            case Core::DRIVER_POSTGRES:
                     $qc = '"';
                     break;
             }
@@ -217,7 +244,7 @@
         }
 
         /**
-         * Returns the shortname / prefix of the table
+         * Returns the table alias
          *
          * @return string
          */
@@ -226,28 +253,31 @@
             return $this->b2db_alias;
         }
 
-        protected function _initializeForeignTables()
+        protected function initializeForeignTables()
         {
-            $this->_foreigntables = array();
-            foreach ($this->_foreigncolumns as $column) {
+            $this->foreign_tables = [];
+            foreach ($this->getForeignColumns() as $column) {
                 $table_classname = $column['class'];
                 $table = clone $table_classname::getTable();
-                $key = ($column['key'] !== null) ? $column['key'] : $table->getIdColumn();
-                $this->_foreigntables[$table->getB2DBAlias()] = array('table' => $table, 'key' => $key, 'column' => $column['name']);
+                $key = ($column['key']) ?? $table->getIdColumn();
+                $this->foreign_tables[$table->getB2DBAlias()] = new ForeignTable($table, $key, $column['name']);
             }
         }
 
+        /**
+         * @return ForeignTable[]
+         */
         public function getForeignTables()
         {
-            if ($this->_foreigntables === null) {
-                $this->_initializeForeignTables();
+            if ($this->foreign_tables === null) {
+                $this->initializeForeignTables();
             }
-            return $this->_foreigntables;
+            return $this->foreign_tables;
         }
 
         public function getForeignColumns()
         {
-            return $this->_foreigncolumns;
+            return $this->foreign_columns;
         }
 
         /**
@@ -259,7 +289,7 @@
          */
         public function getForeignTable($table)
         {
-            return $this->_foreigntables[$table->getB2DBAlias()];
+            return $this->foreign_tables[$table->getB2DBAlias()];
         }
 
         /**
@@ -274,27 +304,29 @@
 
         public function getColumns()
         {
-            return $this->_columns;
+            return $this->columns;
         }
 
         public function getColumn($column)
         {
-            return $this->_columns[$column];
+            return $this->columns[$column];
         }
 
-        protected function _getRealColumnFieldName($column)
+        protected function getRealColumnFieldName($column)
         {
             return mb_substr($column, mb_stripos($column, '.') + 1);
         }
 
         public function getAliasColumns()
         {
-            $retcolumns = array();
-            foreach ($this->_columns as $column => $col_data) {
+            $columns = array();
+
+            foreach ($this->columns as $column => $col_data) {
                 $column_name = explode('.', $column);
-                $retcolumns[] = $this->b2db_alias . '.' . $column_name[1];
+                $columns[] = $this->b2db_alias . '.' . $column_name[1];
             }
-            return $retcolumns;
+
+            return $columns;
         }
 
         /**
@@ -302,126 +334,120 @@
          *
          * @return Resultset
          */
-        public function doSelectAll()
+        public function rawSelectAll()
         {
-            $crit = new Criteria();
-            $crit->setFromTable($this);
-            $crit->generateSelectSQL(true);
+            $query = new Query($this);
+            $query->generateSelectSQL(true);
 
-            $statement = Statement::getPreparedStatement($crit);
-            return $statement->performQuery();
+            return Statement::getPreparedStatement($query)->execute();
         }
 
         public function selectAll()
         {
-            $resultset = $this->doSelectAll();
-            return $this->_populateFromResultset($resultset);
+            $resultset = $this->rawSelectAll();
+            return $this->populateFromResultset($resultset);
         }
 
-        /**
-         * Returns one row from the current table based on a given id
-         *
-         * @param integer $id
-         * @param Criteria $crit
-         * @param mixed $join
-         *
-         * @return \b2db\Row
-         */
-        public function doSelectById($id, Criteria $crit = null, $join = 'all')
+	    /**
+	     * Returns one row from the current table based on a given id
+	     *
+	     * @param integer $id
+	     * @param Query|null $query
+	     * @param mixed $join
+	     *
+	     * @return \b2db\Row
+	     */
+        public function rawSelectById($id, Query $query = null, $join = 'all')
         {
-            if ($crit == null)
-                $crit = new Criteria();
-            $crit->addWhere($this->id_column, $id);
-            $crit->setLimit(1);
-            return $this->doSelectOne($crit, $join);
+            if (!$query instanceof Query) {
+            	$query = new Query($this);
+            }
+            $query->where($this->id_column, $id);
+            $query->setLimit(1);
+            return $this->rawSelectOne($query, $join);
         }
 
-        /**
-         * Select an object by its unique id
-         * 
-         * @param integer $id
-         * @param Criteria $crit (optional) Criteria with filters
-         * @param mixed $join
-         *
-         * @return Saveable
-         */
-        public function selectById($id, Criteria $crit = null, $join = 'all')
+	    /**
+	     * Select an object by its unique id
+	     *
+	     * @param integer $id
+	     * @param Query $query (optional) Criteria with filters
+	     * @param mixed $join
+	     *
+	     * @return Saveable
+	     * @throws Exception
+	     */
+        public function selectById($id, Query $query = null, $join = 'all')
         {
             if (!$this->hasCachedB2DBObject($id)) {
-                $row = $this->doSelectById($id, $crit, $join);
-                $object = $this->_populateFromRow($row);
+                $row = $this->rawSelectById($id, $query, $join);
+                $object = $this->populateFromRow($row);
             } else {
                 $object = $this->getB2DBCachedObject($id);
             }
             return $object;
         }
 
-        /**
-         * Counts rows
-         *
-         * @param Criteria $crit
-         * 
-         * @return integer
-         */
-        public function doCount(Criteria $crit)
+	    /**
+	     * Counts rows
+	     *
+	     * @param Query $query
+	     *
+	     * @return integer
+	     */
+        public function count(Query $query)
         {
-            $crit->setFromTable($this);
-            $crit->generateCountSQL();
-            $statement = Statement::getPreparedStatement($crit);
+            $query->setTable($this);
+            $query->generateCountSQL();
 
-            $resultset = $statement->performQuery();
+	        $resultset = Statement::getPreparedStatement($query)->execute();
             return $resultset->getCount();
         }
 
-        public function count(Criteria $crit)
+	    /**
+	     * Selects rows based on given criteria
+	     *
+	     * @param Query $query
+	     *
+	     * @param string $join
+	     * @return Resultset
+	     */
+        public function rawSelect(Query $query, $join = 'all')
         {
-            return $this->doCount($crit);
-        }
+            if (!$query instanceof Query) {
+                $query = new Query($this);
+            }
 
-        /**
-         * Selects rows based on given criteria
-         *
-         * @param Criteria $crit
-         *
-         * @return Resultset
-         */
-        public function doSelect(Criteria $crit, $join = 'all')
-        {
-            if ($crit == null)
-                $crit = new Criteria();
-            $crit->setFromTable($this);
-            $crit->setupJoinTables($join);
-            $crit->generateSelectSQL();
+            $query->setupJoinTables($join);
+            $query->generateSelectSQL();
 
-            $statement = Statement::getPreparedStatement($crit);
-
-            $resultset = $statement->performQuery();
+	        $resultset = Statement::getPreparedStatement($query)->execute();
             return ($resultset->count()) ? $resultset : null;
         }
 
-        public function select(Criteria $crit, $join = 'all')
+        public function select(Query $query, $join = 'all')
         {
-            $resultset = $this->doSelect($crit, $join);
-            return $this->_populateFromResultset($resultset);
+            $resultset = $this->rawSelect($query, $join);
+            return $this->populateFromResultset($resultset);
         }
 
-        /**
-         * Selects one row from the table based on the given criteria
-         *
-         * @param Criteria $crit
-         * @param mixed $join
-         *
-         * @return Row
-         */
-        public function doSelectOne(Criteria $crit, $join = 'all')
+	    /**
+	     * Selects one row from the table based on the given criteria
+	     *
+	     * @param Query $query
+	     * @param mixed $join
+	     *
+	     * @return Row
+	     * @throws Exception
+	     */
+        public function rawSelectOne(Query $query, $join = 'all')
         {
-            $crit->setFromTable($this);
-            $crit->setupJoinTables($join);
-            $crit->setLimit(1);
-            $crit->generateSelectSQL();
+            $query->setTable($this);
+            $query->setupJoinTables($join);
+            $query->setLimit(1);
+            $query->generateSelectSQL();
 
-            $statement = Statement::getPreparedStatement($crit);
-            $resultset = $statement->performQuery();
+	        $resultset = Statement::getPreparedStatement($query)->execute();
             $resultset->next();
 
             return $resultset->getCurrentRow();
@@ -430,71 +456,67 @@
         /**
          * Selects one object based on the given criteria
          *
-         * @param Criteria $crit
+         * @param Query $query
          * @param mixed $join
          *
          * @return Saveable
          */
-        public function selectOne(Criteria $crit, $join = 'all')
+        public function selectOne(Query $query, $join = 'all')
         {
-            $row = $this->doSelectOne($crit, $join);
-            return $this->_populateFromRow($row);
+            $row = $this->rawSelectOne($query, $join);
+            return $this->populateFromRow($row);
         }
 
         /**
          * Inserts a row into the table
          *
-         * @param Criteria $crit
+         * @param Insertion $insertion
          *
          * @return Resultset
          */
-        public function doInsert(Criteria $crit)
+        public function insert(Insertion $insertion)
         {
-            $crit->setFromTable($this);
-            $crit->generateInsertSQL();
+        	$query = new Query($this);
+            $query->generateInsertSQL($insertion);
 
-            $statement = Statement::getPreparedStatement($crit);
-            return $statement->performQuery();
+            return Statement::getPreparedStatement($query)->execute();
         }
 
         /**
          * Perform an SQL update
          *
-         * @param Criteria $crit
+         * @param Insertion $insertion
          *
          * @return Resultset
          */
-        public function doUpdate(Criteria $crit)
+        public function rawUpdate(Insertion $insertion)
         {
-            $crit->setFromTable($this);
-            $crit->generateUpdateSQL();
+            $query = new Query($this);
+            $query->generateUpdateSQL($insertion);
 
-            $statement = Statement::getPreparedStatement($crit);
-
-            $value = $statement->performQuery();
+	        $value = Statement::getPreparedStatement($query)->execute();
             $this->clearB2DBCachedObjects();
 
             return $value;
         }
 
-        /**
-         * Perform an SQL update
-         *
-         * @param Criteria $crit
-         * @param integer $id
-         *
-         * @return Resultset
-         */
-        public function doUpdateById(Criteria $crit, $id)
+	    /**
+	     * Perform an SQL update
+	     *
+	     * @param Insertion $insertion
+	     * @param integer $id
+	     *
+	     * @return Resultset
+	     * @throws \Exception
+	     */
+        public function rawUpdateById(Insertion $insertion, $id)
         {
-            $crit->setFromTable($this);
-            $crit->addWhere($this->id_column, $id);
-            $crit->setLimit(1);
-            $crit->generateUpdateSQL();
+        	$query = new Query($this);
+        	$query->where($this->id_column, $id);
+            $query->setLimit(1);
+            $query->generateUpdateSQL($insertion);
 
-            $statement = Statement::getPreparedStatement($crit);
-
-            $value = $statement->performQuery();
+	        $value = Statement::getPreparedStatement($query)->execute();
             $this->deleteB2DBObjectFromCache($id);
 
             return $value;
@@ -503,18 +525,16 @@
         /**
          * Perform an SQL delete
          *
-         * @param Criteria $crit
+         * @param Query $query
          *
          * @return Resultset
          */
-        public function doDelete(Criteria $crit)
+        public function rawDelete(Query $query)
         {
-            $crit->setFromTable($this);
-            $crit->generateDeleteSQL();
+            $query->setTable($this);
+            $query->generateDeleteSQL();
 
-            $statement = Statement::getPreparedStatement($crit);
-
-            $value = $statement->performQuery();
+	        $value = Statement::getPreparedStatement($query)->execute();
             $this->clearB2DBCachedObjects();
 
             return $value;
@@ -527,16 +547,15 @@
          *
          * @return Resultset
          */
-        public function doDeleteById($id)
+        public function rawDeleteById($id)
         {
-            $crit = new Criteria();
-            $crit->setFromTable($this);
-            $crit->addWhere($this->id_column, $id);
-            $crit->generateDeleteSQL();
+            $query = new Query($this);
+            $query->where($this->id_column, $id);
+            $query->generateDeleteSQL();
 
             $this->deleteB2DBObjectFromCache($id);
 
-            return Statement::getPreparedStatement($crit)->performQuery();
+            return Statement::getPreparedStatement($query)->execute();
         }
 
         /**
@@ -546,16 +565,17 @@
          */
         public function create()
         {
-            $sql = $this->_createToSQL();
+            $sql = $this->generateCreateSql();
+            $query = new RawQuery($sql);
             try {
                 $this->drop();
-                return Statement::getPreparedStatement($sql)->performQuery();
+                return Statement::getPreparedStatement($query)->execute();
             } catch (\Exception $e) {
                 throw new Exception('Error creating table ' . $this->getB2DBName() . ': ' . $e->getMessage(), $sql);
             }
         }
 
-        protected function _setupIndexes()
+        protected function setupIndexes()
         {
 
         }
@@ -563,25 +583,26 @@
         public function createIndexes()
         {
             try {
-                $this->_setupIndexes();
+                $this->setupIndexes();
                 $qc = $this->getQC();
 
-                foreach ($this->_indexes as $index_name => $details) {
+                foreach ($this->indexes as $index_name => $details) {
                     $index_column_sqls = array();
                     foreach ($details['columns'] as $column) {
-                        $index_column_sqls[] = $qc . $this->_getRealColumnFieldName($column) . $qc;
+                        $index_column_sqls[] = $qc . $this->getRealColumnFieldName($column) . $qc;
                     }
                     switch (Core::getDriver()) {
-                        case 'pgsql':
-                            $sql = " CREATE INDEX " . Core::getTablePrefix() . $this->b2db_name . "_{$index_name} ON " . $this->_getTableNameSQL() . " (".join(', ', $index_column_sqls).')';
+	                    case Core::DRIVER_POSTGRES:
+                            $sql = " CREATE INDEX " . Core::getTablePrefix() . $this->b2db_name . "_{$index_name} ON " . $this->getSqlTableName() . " (".join(', ', $index_column_sqls).')';
                             break;
-                        case 'mysql':
-                            $sql = " ALTER TABLE " . $this->_getTableNameSQL() . " ADD INDEX " . Core::getTablePrefix() . $this->b2db_name . "_{$index_name} (".join(', ', $index_column_sqls).')';
+	                    case Core::DRIVER_MYSQL:
+                            $sql = " ALTER TABLE " . $this->getSqlTableName() . " ADD INDEX " . Core::getTablePrefix() . $this->b2db_name . "_{$index_name} (".join(', ', $index_column_sqls).')';
                             break;
                     }
 
                     if (isset($sql)) {
-                        Statement::getPreparedStatement($sql)->performQuery();
+	                    $query = new RawQuery($sql);
+                        Statement::getPreparedStatement($query)->execute();
                     }
                 }
             } catch (Exception $e) {
@@ -589,7 +610,7 @@
             }
         }
 
-        protected function _dropToSQL()
+        protected function generateDropSql()
         {
             return 'DROP TABLE IF EXISTS ' . Core::getTablePrefix() . $this->b2db_name;
         }
@@ -601,10 +622,11 @@
          */
         public function drop()
         {
+            $sql = $this->generateDropSql();
             try {
-                $sql = $this->_dropToSQL();
-                $statement = Statement::getPreparedStatement($sql);
-                return $statement->performQuery();
+	            $query = new RawQuery($sql);
+                $statement = Statement::getPreparedStatement($query);
+                return $statement->execute();
             } catch (\Exception $e) {
                 throw new Exception('Error dropping table ' . $this->getB2DBName() . ': ' . $e->getMessage(), $sql);
             }
@@ -613,14 +635,14 @@
         /**
          * Return a new criteria with this table as the from-table
          *
-         * @param boolean $setupjointables [optional] Whether to auto-join all related tables by default
+         * @param boolean $setup_join_tables [optional] Whether to auto-join all related tables by default
          *
-         * @return Criteria
+         * @return Query
          */
-        public function getCriteria($setupjointables = false)
+        public function getQuery($setup_join_tables = false)
         {
-            $crit = new Criteria($this, $setupjointables);
-            return $crit;
+        	$query = new Query($this, $setup_join_tables);
+            return $query;
         }
 
         public function formatify($value, $type)
@@ -643,46 +665,54 @@
             }
         }
 
-        public function saveObject(\b2db\Saveable $object)
+        public function saveObject(Saveable $object)
         {
-            $crit = $this->getCriteria();
+            $insertion = new Insertion();
             $id = $object->getB2DBID();
             $changed = false;
+
             foreach ($this->getColumns() as $column) {
                 if (!array_key_exists('property', $column)) {
                     throw new Exception('Could not match all columns to properties for object of type \\' . get_class($object) . ". Make sure you're not mixing between initializing the table manually and using column (property) annotations");
                 }
+
                 $property = $column['property'];
                 $value = $this->formatify($object->getB2DBSaveablePropertyValue(mb_strtolower($property)), $column['type']);
-                if ($column['name'] == $this->getIdColumn())
-                    $res_id = $value;
-                if ($id && !$object->isB2DBValueChanged($property))
-                    continue;
-                if (is_object($value))
-                    $value = (int) $value->getID();
-                if (in_array($column['name'], $this->_foreigncolumns))
-                    $value = ($value) ? (int) $value : null;
+
+                if ($id && !$object->isB2DBValueChanged($property)) {
+                	continue;
+                }
+
+                if ($value instanceof Saveable) {
+                	$value = (int) $value->getB2DBID();
+                }
+
+                if (in_array($column['name'], $this->foreign_columns)) {
+                	$value = ($value) ? (int) $value : null;
+                }
+
                 if ($id) {
                     $changed = true;
-                    $crit->addUpdate($column['name'], $value);
+                    $insertion->add($column['name'], $value);
                 } elseif ($column['name'] != $this->getIdColumn()) {
-                    $crit->addInsert($column['name'], $value);
+                    $insertion->add($column['name'], $value);
                 }
             }
+
             if ($id) {
                 if ($changed) {
-                    $this->doUpdateById($crit, $id);
+                    $this->rawUpdateById($insertion, $id);
                 }
                 $res_id = $id;
             } else {
-                $res = $this->doInsert($crit);
+                $res = $this->insert($insertion);
                 $res_id = $res->getInsertID();
             }
 
             return $res_id;
         }
 
-        protected function _getColumnDefaultDefinitionSQL($column)
+        protected function getColumnDefaultDefinitionSQL($column)
         {
             $sql = '';
             if (isset($column['default_value'])) {
@@ -701,59 +731,59 @@
             return $sql;
         }
 
-        protected function _getColumnDefinitionSQL($column, $alter = false)
+        protected function getColumnDefinitionSQL($column, $alter = false)
         {
-            $fsql = '';
+            $sql = '';
             switch ($column['type']) {
                 case 'integer':
-                    if (Core::getDriver() == 'pgsql' && isset($column['auto_inc']) && $column['auto_inc'] == true) {
-                        $fsql .= 'SERIAL';
-                    } elseif (Core::getDriver() == 'pgsql') {
-                        $fsql .= 'INTEGER';
+                    if (Core::getDriver() == Core::DRIVER_POSTGRES && isset($column['auto_inc']) && $column['auto_inc'] == true) {
+                        $sql .= 'SERIAL';
+                    } elseif (Core::getDriver() == Core::DRIVER_POSTGRES) {
+                        $sql .= 'INTEGER';
                     } else {
-                        $fsql .= 'INTEGER(' . $column['length'] . ')';
+                        $sql .= 'INTEGER(' . $column['length'] . ')';
                     }
-                    if ($column['unsigned'] && Core::getDriver() != 'pgsql')
-                        $fsql .= ' UNSIGNED';
+                    if ($column['unsigned'] && Core::getDriver() != Core::DRIVER_POSTGRES)
+                        $sql .= ' UNSIGNED';
                     break;
                 case 'varchar':
                 case 'serializable':
                     if (!$column['length'])
                         throw new Exception("Column '{$column['name']}' (defined in \\" . get_class($this) . ") is missing required 'length' property");
-                    $fsql .= 'VARCHAR(' . $column['length'] . ')';
+                    $sql .= 'VARCHAR(' . $column['length'] . ')';
                     break;
                 case 'float':
-                    $fsql .= 'FLOAT(' . $column['precision'] . ')';
-                    if ($column['unsigned'] && Core::getDriver() != 'pgsql')
-                        $fsql .= ' UNSIGNED';
+                    $sql .= 'FLOAT(' . $column['precision'] . ')';
+                    if ($column['unsigned'] && Core::getDriver() != Core::DRIVER_POSTGRES)
+                        $sql .= ' UNSIGNED';
                     break;
                 case 'blob':
-                    if (Core::getDriver() == 'mysql') {
-                        $fsql .= 'LONGBLOB';
-                    } elseif (Core::getDriver() == 'pgsql') {
-                        $fsql .= 'BYTEA';
+                    if (Core::getDriver() == Core::DRIVER_MYSQL) {
+                        $sql .= 'LONGBLOB';
+                    } elseif (Core::getDriver() == Core::DRIVER_POSTGRES) {
+                        $sql .= 'BYTEA';
                     } else {
-                        $fsql .= 'BLOB';
+                        $sql .= 'BLOB';
                     }
                     break;
                 case 'text':
                 case 'boolean':
-                    $fsql .= mb_strtoupper($column['type']);
+                    $sql .= mb_strtoupper($column['type']);
                     break;
             }
             if ($column['not_null'])
-                $fsql .= ' NOT NULL';
+                $sql .= ' NOT NULL';
             if ($column['type'] != 'text') {
-                if (isset($column['auto_inc']) && $column['auto_inc'] == true && Core::getDriver() != 'pgsql') {
-                    $fsql .= ' AUTO_INCREMENT';
-                } elseif (isset($column['default_value']) && $column['default_value'] !== null && !(Core::getDriver() == 'pgsql' && $alter) && !(isset($column['auto_inc']) && $column['auto_inc'] == true && Core::getDriver() == 'pgsql')) {
-                    $fsql .= $this->_getColumnDefaultDefinitionSQL($column);
+                if (isset($column['auto_inc']) && $column['auto_inc'] == true && Core::getDriver() != Core::DRIVER_POSTGRES) {
+                    $sql .= ' AUTO_INCREMENT';
+                } elseif (isset($column['default_value']) && $column['default_value'] !== null && !(Core::getDriver() == Core::DRIVER_POSTGRES && $alter) && !(isset($column['auto_inc']) && $column['auto_inc'] == true && Core::getDriver() == Core::DRIVER_POSTGRES)) {
+                    $sql .= $this->getColumnDefaultDefinitionSQL($column);
                 }
             }
-            return $fsql;
+            return $sql;
         }
 
-        protected function _getTableNameSQL()
+        public function getSqlTableName()
         {
             $qc = $this->getQC();
             $sql = $qc . Core::getTablePrefix() . $this->b2db_name . $qc;
@@ -761,81 +791,97 @@
             return $sql;
         }
 
-        protected function _createToSQL()
+        protected function generateCreateSql()
         {
             $sql = '';
             $qc = $this->getQC();
-            $sql .= "CREATE TABLE " . $this->_getTableNameSQL() . " (\n";
+            $sql .= "CREATE TABLE " . $this->getSqlTableName() . " (\n";
             $field_sql = array();
-            foreach ($this->_columns as $column) {
-                $_sql = " $qc" . $this->_getRealColumnFieldName($column['name']) . "$qc ";
-                $field_sql[] = $_sql . $this->_getColumnDefinitionSQL($column);
+            foreach ($this->columns as $column) {
+                $_sql = " $qc" . $this->getRealColumnFieldName($column['name']) . "$qc ";
+                $field_sql[] = $_sql . $this->getColumnDefinitionSQL($column);
             }
             $sql .= join(",\n", $field_sql);
-            $sql .= ", PRIMARY KEY ($qc" . $this->_getRealColumnFieldName($this->id_column) . "$qc) ";
+            $sql .= ", PRIMARY KEY ($qc" . $this->getRealColumnFieldName($this->id_column) . "$qc) ";
             $sql .= ') ';
-            if (Core::getDriver() != 'pgsql')
-                $sql .= 'AUTO_INCREMENT=' . $this->_autoincrement_start_at . ' ';
-            if (Core::getDriver() != 'pgsql')
-                $sql .= 'CHARACTER SET ' . $this->_charset;
+            if (Core::getDriver() != Core::DRIVER_POSTGRES) {
+                $sql .= 'AUTO_INCREMENT=' . $this->autoincrement_start_at . ' ';
+                $sql .= 'CHARACTER SET ' . $this->charset;
+            }
 
             return $sql;
         }
 
-        protected function _getAddColumnSQL($details)
+	    /**
+	     * @param $details
+	     * @return RawQuery
+	     */
+        protected function getAddColumnQuery($details)
         {
             $qc = $this->getQC();
 
-            $sql = 'ALTER TABLE ' . $this->_getTableNameSQL();
-            $sql .= " ADD COLUMN $qc" . $this->_getRealColumnFieldName($details['name']) . "$qc " . $this->_getColumnDefinitionSQL($details);
+            $sql = 'ALTER TABLE ' . $this->getSqlTableName();
+            $sql .= " ADD COLUMN $qc" . $this->getRealColumnFieldName($details['name']) . "$qc " . $this->getColumnDefinitionSQL($details);
 
-            return $sql;
+            return new RawQuery($sql);
         }
 
-        protected function _getAlterColumnSQL($details)
+	    /**
+	     * @param $details
+	     * @return RawQuery
+	     */
+        protected function getAlterColumnQuery($details)
         {
-            $sql = 'ALTER TABLE ' . $this->_getTableNameSQL();
+            $sql = 'ALTER TABLE ' . $this->getSqlTableName();
             $qc = $this->getQC();
             switch (Core::getDriver()) {
-                case 'mysql':
-                    $sql .= " MODIFY $qc" . $this->_getRealColumnFieldName($details['name']) . "$qc ";
+	            case Core::DRIVER_MYSQL:
+                    $sql .= " MODIFY $qc" . $this->getRealColumnFieldName($details['name']) . "$qc ";
                     break;
-                case 'pgsql':
-                    $sql .= " ALTER COLUMN $qc" . $this->_getRealColumnFieldName($details['name']) . "$qc TYPE ";
+	            case Core::DRIVER_POSTGRES:
+                    $sql .= " ALTER COLUMN $qc" . $this->getRealColumnFieldName($details['name']) . "$qc TYPE ";
                     break;
             }
-            $sql .= $this->_getColumnDefinitionSQL($details, true);
+            $sql .= $this->getColumnDefinitionSQL($details, true);
 
-            return $sql;
+            return new RawQuery($sql);
         }
 
-        protected function _getAlterColumnDefaultSQL($details)
+	    /**
+	     * @param $details
+	     * @return RawQuery
+	     */
+        protected function getAlterColumnDefaultQuery($details)
         {
             switch (Core::getDriver()) {
-                case 'pgsql':
-                    $default_definition = $this->_getColumnDefaultDefinitionSQL($details);
+	            case Core::DRIVER_POSTGRES:
+                    $default_definition = $this->getColumnDefaultDefinitionSQL($details);
                     if ($default_definition) {
-                        $sql = 'ALTER TABLE ' . $this->_getTableNameSQL();
+                        $sql = 'ALTER TABLE ' . $this->getSqlTableName();
                         $qc = $this->getQC();
-                        $sql .= " ALTER COLUMN $qc" . $this->_getRealColumnFieldName($details['name']) . "$qc SET";
+                        $sql .= " ALTER COLUMN $qc" . $this->getRealColumnFieldName($details['name']) . "$qc SET";
                         $sql .= $default_definition;
-                        return $sql;
+                        return new RawQuery($sql);
                     }
                     break;
-                default:
-                    return '';
             }
+
+            return null;
         }
 
-        protected function _getDropColumnSQL($column)
+	    /**
+	     * @param $details
+	     * @return RawQuery
+	     */
+        protected function getDropColumnQuery($details)
         {
-            $sql = 'ALTER TABLE ' . $this->_getTableNameSQL();
-            $sql .= ' DROP COLUMN ' . $this->_getRealColumnFieldName($column);
+            $sql = 'ALTER TABLE ' . $this->getSqlTableName();
+            $sql .= ' DROP COLUMN ' . $this->getRealColumnFieldName($details);
 
-            return $sql;
+            return new RawQuery($sql);
         }
 
-        protected function _migrateData(Table $old_table)
+        protected function migrateData(Table $old_table)
         {
 
         }
@@ -855,41 +901,38 @@
             $altered_columns = Tools::array_diff_recursive($old_columns, $new_columns);
             $dropped_columns = \array_keys(array_diff_key($old_columns, $new_columns));
 
-            $sqls = array();
+	        /** @var RawQuery[] $queries */
+            $queries = [];
             foreach ($added_columns as $details) {
-                $sqls[] = $this->_getAddColumnSQL($details);
+                $queries[] = $this->getAddColumnQuery($details);
             }
-            if (count($sqls)) {
-                foreach ($sqls as $sqlStmt) {
-                    if ($sqlStmt) {
-                        Statement::getPreparedStatement($sqlStmt)->performQuery();
-                    }
+
+            foreach ($queries as $query) {
+                if ($query instanceof QueryInterface) {
+                    Statement::getPreparedStatement($query)->execute();
                 }
             }
 
-            $this->_migrateData($old_table);
+            $this->migrateData($old_table);
 
-            $sqls = array();
+            $queries = [];
             foreach ($altered_columns as $column => $details) {
                 if (in_array($column, $dropped_columns)) continue;
 
-                $sqls[] = $this->_getAlterColumnSQL($new_columns[$column]);
-                $altersql = $this->_getAlterColumnDefaultSQL($new_columns[$column]);
-                if ($altersql) $sqls[] = $altersql;
+                $queries[] = $this->getAlterColumnQuery($new_columns[$column]);
+                $queries[] = $this->getAlterColumnDefaultQuery($new_columns[$column]);
             }
             foreach ($dropped_columns as $details) {
-                $sqls[] = $this->_getDropColumnSQL($details);
+                $queries[] = $this->getDropColumnQuery($details);
             }
-            if (count($sqls)) {
-                foreach ($sqls as $sqlStmt) {
-                    if ($sqlStmt) {
-                        Statement::getPreparedStatement($sqlStmt)->performQuery();
-                    }
+            foreach ($queries as $query) {
+                if ($query instanceof RawQuery) {
+                    Statement::getPreparedStatement($query)->execute();
                 }
             }
         }
 
-        protected function _getSubclassNameFromRow($row, $classnames)
+        protected function getSubclassNameFromRow(Row $row, $classnames)
         {
             $identifier = $row->get($this->getB2DBName() . '.' . $classnames['identifier']);
             $classname = (\array_key_exists($identifier, $classnames['classes'])) ? $classnames['classes'][$identifier] : null;
@@ -900,19 +943,26 @@
             return $classname;
         }
 
-        protected function _populateFromRow($row = null, $classname = null, $id_column = null, $row_id = null, $from_resultset = false)
+	    /**
+	     * @param Row|null $row
+	     * @param Saveable $classname
+	     * @param null $id_column
+	     * @param null $row_id
+	     * @param bool $from_resultset
+	     *
+	     * @return Saveable|null
+	     */
+        protected function populateFromRow(Row $row = null, $classname = null, $id_column = null, $row_id = null, $from_resultset = false)
         {
             $item = null;
-            if ($row) {
+            if ($row instanceof Row) {
                 if (!$from_resultset && Core::isDebugMode()) {
-                    $pretime = Core::getDebugTime();
-                    $populated_classnames = array();
-                    $populated_classes = 0;
+                    $previous_time = Core::getDebugTime();
                 }
                 if ($classname === null) {
                     $classnames = Core::getCachedTableEntityClasses('\\'.get_class($this));
                     if ($classnames) {
-                        $classname = $this->_getSubclassNameFromRow($row, $classnames);
+                        $classname = $this->getSubclassNameFromRow($row, $classnames);
                     } else {
                         $classname = Core::getCachedTableEntityClass('\\'.get_class($this));
                     }
@@ -921,30 +971,39 @@
                     }
                 }
 
-                $id_column = ($id_column !== null) ? $id_column : $row->getCriteria()->getTable()->getIdColumn();
+                $id_column = ($id_column) ?? $row->getQuery()->getTable()->getIdColumn();
                 $row_id = ($row_id !== null) ? $row_id : $row->get($id_column);
                 $is_cached = $classname::getB2DBTable()->hasCachedB2DBObject($row_id);
                 $item = $classname::getB2DBCachedObjectIfAvailable($row_id, $classname, $row);
                 if (!$from_resultset && !$is_cached && Core::isDebugMode()) {
-                    Core::objectPopulationHit(1, array($classname), $pretime);
+                    Core::objectPopulationHit(1, array($classname), $previous_time);
                 }
             }
             return $item;
         }
 
-        protected function _populateFromResultset($resultset = null, $classname = null, $id_column = null, $index_column = null)
+	    /**
+	     * @param Resultset|null $resultset
+	     * @param Saveable $classname
+	     * @param null $id_column
+	     * @param null $index_column
+	     *
+	     * @return Saveable[]
+	     */
+        protected function populateFromResultset(Resultset $resultset = null, $classname = null, $id_column = null, $index_column = null)
         {
             $items = array();
             if ($resultset instanceof Resultset) {
                 if (Core::isDebugMode()) {
-                    $pretime = Core::getDebugTime();
+                    $previous_time = Core::getDebugTime();
                     $populated_classnames = array();
                     $populated_classes = 0;
                 }
-                $criteria = $resultset->getCriteria();
-                $id_column = ($id_column !== null) ? $id_column : $criteria->getTable()->getIdColumn();
+
+                $query = $resultset->getQuery();
+                $id_column = ($id_column) ?? $query->getTable()->getIdColumn();
                 if ($index_column === null) {
-                    $index_column = ($criteria->getIndexBy()) ? $criteria->getIndexBy() : $id_column;
+                    $index_column = ($query->getIndexBy()) ? $query->getIndexBy() : $id_column;
                 }
                 $classnames = Core::getCachedTableEntityClasses('\\'.get_class($this));
                 if ($classname === null) {
@@ -952,27 +1011,34 @@
                 }
                 while ($row = $resultset->getNextRow()) {
                     if ($classnames) {
-                        $classname = $this->_getSubclassNameFromRow($row, $classnames);
+                        $classname = $this->getSubclassNameFromRow($row, $classnames);
                     }
                     $row_id = $row->get($id_column);
                     $is_cached = $classname::getB2DBTable()->hasCachedB2DBObject($row_id);
-                    $item = $this->_populateFromRow($row, $classname, $id_column, $row_id, true);
+                    $item = $this->populateFromRow($row, $classname, $id_column, $row_id, true);
                     $items[$row->get($index_column)] = $item;
                     if (!$is_cached && Core::isDebugMode()) {
                         $populated_classnames[$classname] = $classname;
                         $populated_classes++;
                     }
                 }
+
                 if (Core::isDebugMode()) {
-                    Core::objectPopulationHit($populated_classes, $populated_classnames, $pretime);
+                    Core::objectPopulationHit($populated_classes, $populated_classnames, $previous_time);
                 }
             }
             return $items;
         }
 
-        public function generateForeignItemsCriteria(Saveable $class, $relation_details)
+	    /**
+	     * @param Saveable $class
+	     * @param $relation_details
+	     *
+	     * @return Query[]|string[]
+	     */
+        public function generateForeignItemsQuery(Saveable $class, $relation_details)
         {
-            $criteria = $this->getCriteria();
+            $query = $this->getQuery();
             $foreign_table = $class->getB2DBTable();
             $foreign_table_class = '\\'.get_class($foreign_table);
             $item_class = (array_key_exists('class', $relation_details)) ? $relation_details['class'] : null;
@@ -985,11 +1051,11 @@
                 $saveable_class = '\\'.get_class($class);
                 $table_details = ($item_class) ? Core::getCachedTableDetails($item_class) : Core::getTableDetails($relation_details['joinclass']);
                 if ($relation_details['orderby']) {
-                    $criteria->addOrderBy("{$table_details['name']}." . $relation_details['orderby']);
+                    $query->addOrderBy("{$table_details['name']}." . $relation_details['orderby']);
                 }
-                $criteria->addWhere("{$table_details['name']}." . $relation_details['foreign_column'], $class->getB2DBSaveablePropertyValue(Core::getCachedColumnPropertyName($saveable_class, $foreign_table->getIdColumn())));
+                $query->where("{$table_details['name']}." . $relation_details['foreign_column'], $class->getB2DBSaveablePropertyValue(Core::getCachedColumnPropertyName($saveable_class, $foreign_table->getIdColumn())));
                 if (array_key_exists('discriminator', $table_details) && $table_details['discriminator'] && array_key_exists($saveable_class, $table_details['discriminator']['discriminators'])) {
-                    $criteria->addWhere($table_details['discriminator']['column'], $table_details['discriminator']['discriminators'][$saveable_class]);
+                    $query->where($table_details['discriminator']['column'], $table_details['discriminator']['discriminators'][$saveable_class]);
                 }
             } else {
                 foreach ($this->getForeignColumns() as $column => $details) {
@@ -997,24 +1063,30 @@
                         $foreign_column = ($details['key']) ? $details['key'] : $foreign_table->getIdColumn();
                         $property_name = Core::getCachedColumnPropertyName(Core::getCachedTableEntityClass($details['class']), $foreign_column);
                         $value = $class->getB2DBSaveablePropertyValue($property_name);
-                        $criteria->addWhere($column, $value);
+                        $query->where($column, $value);
                     } elseif ($item_class && $details['class'] == $item_table_class) {
                         $item_column = $column;
                     }
                 }
                 if ($relation_details['orderby']) {
-                    $criteria->addOrderBy($foreign_table->getB2DBName() . "." . $relation_details['orderby']);
+                    $query->addOrderBy($foreign_table->getB2DBName() . "." . $relation_details['orderby']);
                 }
             }
-            return array($criteria, $item_class, $item_column);
+            return array($query, $item_class, $item_column);
         }
 
+	    /**
+	     * @param Saveable $class
+	     * @param $relation_details
+	     *
+	     * @return Saveable[]
+	     */
         public function getForeignItems(Saveable $class, $relation_details)
         {
-            list ($criteria, $item_class, $item_column) = $this->generateForeignItemsCriteria($class, $relation_details);
+            list ($query, $item_class, $item_column) = $this->generateForeignItemsQuery($class, $relation_details);
             if (!$item_class) {
                 $items = array();
-                $resultset = $this->doSelect($criteria);
+                $resultset = $this->rawSelect($query);
                 if ($resultset) {
                     $column = "{$this->getB2DBName()}." . $relation_details['column'];
                     while ($row = $resultset->getNextRow()) {
@@ -1023,17 +1095,24 @@
                 }
                 return $items;
             } elseif (!$relation_details['manytomany']) {
-                return $this->select($criteria);
+                return $this->select($query);
             } else {
-                $resultset = $this->doSelect($criteria);
-                return $this->_populateFromResultset($resultset, $item_class, $item_column, $item_column);
+                $resultset = $this->rawSelect($query);
+
+                return $this->populateFromResultset($resultset, $item_class, $item_column, $item_column);
             }
         }
 
+	    /**
+	     * @param Saveable $class
+	     * @param $relation_details
+	     *
+	     * @return int
+	     */
         public function countForeignItems(Saveable $class, $relation_details)
         {
-            list ($criteria,,) = $this->generateForeignItemsCriteria($class, $relation_details);
-            $result = $this->doCount($criteria);
+            list ($query,,) = $this->generateForeignItemsQuery($class, $relation_details);
+            $result = $this->count($query);
             return $result;
         }
 
@@ -1090,6 +1169,10 @@
             }
         }
 
+	    /**
+	     * @param $id
+	     * @return Saveable
+	     */
         public function getB2DBCachedObject($id)
         {
             switch (Core::getCacheEntitiesStrategy()) {
@@ -1099,6 +1182,18 @@
                 case Core::CACHE_TYPE_MEMCACHED:
                     return Core::getCacheEntitiesObject()->get('b2db.' . get_called_class() . '.' . $id);
             }
+        }
+
+	    /**
+	     * @return string
+	     */
+        public function getSelectFromSql()
+        {
+        	$name = $this->getSqlTableName();
+	        $alias = $this->getB2DBAlias();
+	        $sql = Query::quoteIdentifier($name) . ' ' . Query::quoteIdentifier($alias);
+
+	        return $sql;
         }
 
     }

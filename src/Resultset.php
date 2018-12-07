@@ -2,6 +2,8 @@
 
     namespace b2db;
 
+    use b2db\interfaces\QueryInterface;
+
     /**
      * Resultset class
      *
@@ -24,9 +26,9 @@
         protected $rows = array();
 
         /**
-         * @var Criteria
+         * @var QueryInterface
          */
-        protected $crit;
+        protected $query;
 
         protected $int_ptr;
 
@@ -39,17 +41,18 @@
         public function __construct(Statement $statement)
         {
             try {
-                $this->crit = $statement->getCriteria();
-                if ($this->crit instanceof Criteria) {
-                    if ($this->crit->action == 'insert') {
+                $this->query = $statement->getQuery();
+
+                if ($this->query instanceof QueryInterface) {
+                    if ($this->query->isInsert()) {
                         $this->insert_id = $statement->getInsertID();
-                    } elseif ($this->crit->action == 'select') {
+                    } elseif ($this->query->isSelect()) {
                         while ($row = $statement->fetch()) {
                             $this->rows[] = new Row($row, $statement);
                         }
                         $this->max_ptr = count($this->rows);
                         $this->int_ptr = 0;
-                    } elseif ($this->crit->action = 'count') {
+                    } elseif ($this->query->isCount()) {
                         $value = $statement->fetch();
                         $this->max_ptr = $value['num_col'];
                     }
@@ -81,9 +84,6 @@
          */
         public function getCurrentRow()
         {
-            if ($this->int_ptr == 0 && Core::isDebugLoggingEnabled()) {
-                \caspar\core\Logging::log('This is not a valid row');
-            }
             if (isset($this->rows[($this->int_ptr - 1)])) {
                 return $this->rows[($this->int_ptr - 1)];
             }
@@ -126,15 +126,15 @@
 
         public function getSQL()
         {
-            return ($this->crit instanceof Criteria) ? $this->crit->getSQL() : '';
+            return ($this->query instanceof Criteria) ? $this->query->getSQL() : '';
         }
 
         public function printSQL()
         {
             $str = '';
-            if ($this->crit instanceof Criteria) {
-                $str .= $this->crit->getSQL();
-                foreach ($this->crit->getValues() as $val) {
+            if ($this->query instanceof Criteria) {
+                $str .= $this->query->getSQL();
+                foreach ($this->query->getValues() as $val) {
                     if (!is_int($val)) {
                         $val = '\'' . $val . '\'';
                     }
@@ -164,7 +164,7 @@
         public function key()
         {
             if ($this->id_col === null)
-                $this->id_col = $this->crit->getTable()->getIdColumn();
+                $this->id_col = $this->query->getTable()->getIdColumn();
 
             $row = $this->getCurrentRow();
 
@@ -187,9 +187,12 @@
             return (integer) $this->max_ptr;
         }
 
-        public function getCriteria()
+	    /**
+	     * @return Query
+	     */
+        public function getQuery()
         {
-            return $this->crit;
+            return $this->query;
         }
 
     }

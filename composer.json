@@ -14,7 +14,10 @@
     ],
     "require" : {
         "php" : ">=7.0.0",
-        "ext-Reflection" : "*"
+        "ext-apc" : "*",
+        "ext-Reflection" : "*",
+        "ext-mbstring" : "*",
+        "ext-pdo" : "*"
     },
     "autoload" : {
         "psr-4" : {

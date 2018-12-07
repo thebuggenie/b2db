@@ -23,7 +23,7 @@
     class Saveable
     {
 
-        protected $_b2db_initial_values = array();
+        protected $b2db_initial_values = array();
 
         /**
          * Return the associated B2DBTable for this class
@@ -32,16 +32,18 @@
          */
         public static function getB2DBTable()
         {
-            $b2dbtablename = Core::getCachedB2DBTableClass('\\'.get_called_class());
-            return $b2dbtablename::getTable();
+            $b2db_table_name = Core::getCachedB2DBTableClass('\\'.get_called_class());
+            return $b2db_table_name::getTable();
         }
 
         public static function getB2DBCachedObjectIfAvailable($id, $classname, $row = null)
         {
             $has_cached = self::getB2DBTable()->hasCachedB2DBObject($id);
             $object = ($has_cached) ? self::getB2DBTable()->getB2DBCachedObject($id) : new $classname($id, $row);
-            if (!$has_cached)
+
+            if (!$has_cached) {
                 self::getB2DBTable()->cacheB2DBObject($id, $object);
+            }
 
             return $object;
         }
@@ -74,6 +76,7 @@
                 $this->$property = $value;
             } elseif (is_numeric($this->$property) && $this->$property > 0) {
                 if ($relation_details && \class_exists($relation_details['class'])) {
+                	/** @var Saveable $classname */
                     $classname = $relation_details['class'];
                     try {
                         if (!$use_cache) {
@@ -91,7 +94,7 @@
             return $this->$property;
         }
 
-        protected function _populatePropertiesFromRow(\b2db\Row $row, $traverse = true, $foreign_key = null)
+        protected function _populatePropertiesFromRow(Row $row, $traverse = true, $foreign_key = null)
         {
             $table = self::getB2DBTable();
             $id_column = $table->getIdColumn();
@@ -146,55 +149,25 @@
             }
         }
 
-        protected function _preInitialize()
-        {
+        protected function _preInitialize() {}
 
-        }
+        protected function _postInitialize() {}
 
-        protected function _postInitialize()
-        {
+        protected function _construct(Row $row, $foreign_key = null) {}
 
-        }
+        protected function _clone() {}
 
-        protected function _construct(\b2db\Row $row, $foreign_key = null)
-        {
+        protected function _preSave($is_new) {}
 
-        }
+        protected function _postSave($is_new) {}
 
-        protected function _clone()
-        {
+        protected function _preDelete() {}
 
-        }
+        protected function _postDelete() {}
 
-        protected function _preSave($is_new)
-        {
+        protected function _preMorph() {}
 
-        }
-
-        protected function _postSave($is_new)
-        {
-
-        }
-
-        protected function _preDelete()
-        {
-
-        }
-
-        protected function _postDelete()
-        {
-
-        }
-
-        protected function _preMorph()
-        {
-
-        }
-
-        protected function _postMorph(Saveable $original_object)
-        {
-
-        }
+        protected function _postMorph(Saveable $original_object) {}
 
         public function getB2DBSaveablePropertyValue($property_name)
         {
@@ -212,7 +185,7 @@
         {
             $column = self::getB2DBTable()->getIdColumn();
             $property = explode('.', $column);
-            $property_name = "_{$property[1]}";
+            $property_name = (property_exists($this, $property[1])) ? $property[1] : "_{$property[1]}";
             return $this->$property_name;
         }
 
@@ -221,7 +194,7 @@
             foreach ($this->getB2DBTable()->getColumns() as $column) {
                 $property = mb_strtolower($column['property']);
                 $value = $this->getB2DBSaveablePropertyValue($property);
-                $this->_b2db_initial_values[$property] = $value;
+                $this->b2db_initial_values[$property] = $value;
             }
         }
 
@@ -232,7 +205,7 @@
                     throw new \Exception('Please specify a valid id for object of type \\' . get_class($this));
                 }
                 if ($row === null) {
-                    $row = self::getB2DBTable()->doSelectById($id);
+                    $row = self::getB2DBTable()->rawSelectById($id);
                 }
 
                 if (!$row instanceof Row) {
@@ -241,7 +214,12 @@
                 try {
                     $this->_preInitialize();
                     $table = $this->getB2DBTable();
-                    $this->_id = (integer) $id;
+                    if (property_exists($this, 'id')) {
+	                    $this->id = (integer) $id;
+                    }
+                    if (property_exists($this, '_id')) {
+	                    $this->_id = (integer) $id;
+                    }
                     $this->_populatePropertiesFromRow($row, $traverse, $foreign_key);
                     $this->_b2dbResetInitialValues();
                     $this->_construct($row, $foreign_key);
@@ -257,22 +235,35 @@
 
         final public function __clone()
         {
-            $this->_id = null;
+	        if (property_exists($this, 'id')) {
+		        $this->id = null;
+	        }
+	        if (property_exists($this, '_id')) {
+		        $this->_id = null;
+	        }
             $this->_clone();
         }
 
         final public function isB2DBValueChanged($property)
         {
-            return $this->_b2db_initial_values[$property] !== $this->getB2DBSaveablePropertyValue($property);
+            return $this->b2db_initial_values[$property] !== $this->getB2DBSaveablePropertyValue($property);
         }
 
         final public function save()
         {
-            $is_new = !(bool) $this->_id;
+	        if (property_exists($this, 'id')) {
+	            $is_new = !(bool) $this->id;
+	        } else {
+	            $is_new = !(bool) $this->_id;
+	        }
             $this->_preSave($is_new);
             $res_id = self::getB2DBTable()->saveObject($this);
             $this->_b2dbResetInitialValues();
-            $this->_id = $res_id;
+	        if (property_exists($this, 'id')) {
+	            $this->id = $res_id;
+	        } else {
+	            $this->_id = $res_id;
+	        }
             if ($is_new || Core::getCacheEntitiesStrategy() == Core::CACHE_TYPE_MEMCACHED) {
                 $this->getB2DBTable()->cacheB2DBObject($res_id, $this);
             }
@@ -284,7 +275,7 @@
             $id = $this->getB2DBID();
 
             $this->_preDelete();
-            self::getB2DBTable()->doDeleteById($id);
+            self::getB2DBTable()->rawDeleteById($id);
             $this->getB2DBTable()->deleteB2DBObjectFromCache($id);
             $this->_postDelete();
         }
@@ -307,11 +298,15 @@
             $table = self::getB2DBTable();
             $id_column = $table->getIdColumn();
             foreach ($table->getColumns() as $column) {
-                if (!$keep_id && $column['name'] == $id_column)
+                if (!$keep_id && $column['name'] == $id_column) {
                     continue;
+                }
+
                 $property_name = $column['property'];
-                if (!array_key_exists($property_name, $data))
+                if (!array_key_exists($property_name, $data)) {
                     continue;
+                }
+
                 $this->$property_name = $data[$property_name];
             }
             $this->_postMorph($original_object);

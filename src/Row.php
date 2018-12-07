@@ -21,14 +21,14 @@
     class Row implements \ArrayAccess
     {
 
-        protected $_fields = array();
+        protected $fields = array();
 
         /**
          * Statement
          *
          * @var Statement
          */
-        protected $_statement = null;
+        protected $statement = null;
 
         protected $id_col = null;
 
@@ -40,61 +40,67 @@
         public function __construct($row, $statement)
         {
             foreach ($row as $key => $val) {
-                $this->_fields[$key] = $val;
+                $this->fields[$key] = $val;
             }
-            $this->_statement = $statement;
+            $this->statement = $statement;
         }
 
+	    /**
+	     * @return Join[]
+	     */
         public function getJoinedTables()
         {
-            return $this->_statement->getCriteria()->getForeignTables();
+            return $this->statement->getQuery()->getJoins();
         }
 
-        protected function _getColumnName($column, $foreign_key = null)
+        protected function getColumnName($column, $foreign_key = null)
         {
             if ($foreign_key !== null) {
-                foreach ($this->_statement->getCriteria()->getForeignTables() as $aft) {
-                    if ($aft['original_column'] == $foreign_key) {
-                        $column = $aft['jointable']->getB2DBAlias() . '.' . $this->_statement->getCriteria()->getColumnName($column);
+                foreach ($this->statement->getQuery()->getJoins() as $join) {
+                    if ($join->getOriginalColumn() == $foreign_key) {
+                        $column = $join->getTable()->getB2DBAlias() . '.' . Table::getColumnName($column);
                         break;
                     }
                 }
-            } else
-                $column = $this->_statement->getCriteria()->getSelectionColumn($column);
+            } else {
+                $column = $this->statement->getQuery()->getSelectionColumn($column);
+            }
 
             return $column;
         }
 
         public function get($column, $foreign_key = null)
         {
-            if ($this->_statement == null)
-                throw new Exception('Statement did not execute, cannot return unknown value for column ' . $column);
+            if ($this->statement == null) {
+            	throw new Exception('Statement did not execute, cannot return unknown value for column ' . $column);
+            }
 
-            $column = $this->_getColumnName($column, $foreign_key);
+            $column = $this->getColumnName($column, $foreign_key);
 
-            if (isset($this->_fields[$this->_statement->getCriteria()->getSelectionAlias($column)]))
-                return $this->_fields[$this->_statement->getCriteria()->getSelectionAlias($column)];
-            else
-                return null;
+            if (isset($this->fields[$this->statement->getQuery()->getSelectionAlias($column)])) {
+                return $this->fields[$this->statement->getQuery()->getSelectionAlias($column)];
+            }
+
+            return null;
         }
 
         /**
-         * Return the associated Criteria
+         * Return the associated Query
          *
-         * @return Criteria
+         * @return Query
          */
-        public function getCriteria()
+        public function getQuery()
         {
-            return $this->_statement->getCriteria();
+            return $this->statement->getQuery();
         }
 
         public function offsetExists($offset)
         {
             if (strpos($offset, '.') === false)
-                return (bool) array_key_exists($offset, $this->_fields);
+                return (bool) array_key_exists($offset, $this->fields);
 
-            $column = $this->_getColumnName($offset);
-            return (bool) array_key_exists($this->_statement->getCriteria()->getSelectionAlias($column), $this->_fields);
+            $column = $this->getColumnName($offset);
+            return (bool) array_key_exists($this->statement->getQuery()->getSelectionAlias($column), $this->fields);
         }
 
         public function offsetGet($offset)
@@ -114,8 +120,9 @@
 
         public function getID()
         {
-            if ($this->id_col === null)
-                $this->id_col = $this->_statement->getCriteria()->getTable()->getIdColumn();
+            if ($this->id_col === null) {
+            	$this->id_col = $this->statement->getQuery()->getTable()->getIdColumn();
+            }
 
             return $this->get($this->id_col);
         }

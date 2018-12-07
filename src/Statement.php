@@ -2,6 +2,8 @@
 
     namespace b2db;
 
+    use b2db\interfaces\QueryInterface;
+
     /**
      * Statement class
      *
@@ -22,123 +24,115 @@
     {
 
         /**
-         * Current Criteria
+         * Current Query
          *
-         * @var Criteria
+         * @var QueryInterface
          */
-        protected $crit;
+        protected $query;
 
         /**
          * PDO statement
          *
          * @var \PDOStatement
          */
-        public $statement;
+        protected $statement;
 
-        public $values = array();
+        protected $values = [];
 
-        public $params = array();
+        protected $params = [];
 
-        protected $insert_id = null;
+        protected $insert_id;
 
-        public $custom_sql = '';
+        protected $custom_sql = '';
 
         /**
          * Returns a statement
          *
-         * @param string|Criteria $crit
+         * @param QueryInterface $query
          *
          * @return Statement
          */
-        public static function getPreparedStatement($crit)
+        public static function getPreparedStatement(QueryInterface $query)
         {
-            try {
-                $statement = new Statement($crit);
-            } catch (\Exception $e) {
-                throw $e;
-            }
+            $statement = new Statement($query);
 
             return $statement;
         }
 
-        public function __construct($crit)
+        /**
+         * Statement constructor.
+         *
+         * @param QueryInterface $query
+         * @throws \Exception
+         */
+        public function __construct($query)
         {
-            try {
-                if ($crit instanceof Criteria)
-                    $this->crit = $crit;
-                else
-                    $this->custom_sql = $crit;
-
-                $this->_prepare();
-            } catch (\Exception $e) {
-                throw $e;
-            }
+            $this->query = $query;
+            $this->_prepare();
         }
 
         /**
          * Performs a query, then returns a resultset
          *
-         * @param string $action[optional] The crud action performed (select, insert, update, delete, create, alter)
-         *
          * @return Resultset
          */
-        public function performQuery()
+        public function execute()
         {
-            try {
-                $values = ($this->getCriteria() instanceof Criteria) ? $this->getCriteria()->getValues() : array();
-                if (Core::isDebugMode()) {
-                    if (Core::isDebugLoggingEnabled())
-                        \caspar\core\Logging::log('executing PDO query (' . Core::getSQLCount() . ') - ' . (($this->getCriteria() instanceof Criteria) ? $this->getCriteria()->action : 'unknown'), 'B2DB');
-
-                    $pretime = Core::getDebugTime();
+            $values = ($this->getQuery() instanceof QueryInterface) ? $this->getQuery()->getValues() : array();
+            if (Core::isDebugMode()) {
+                if (Core::isDebugLoggingEnabled() && class_exists('\\caspar\\core\\Logging')) {
+                    \caspar\core\Logging::log('executing PDO query (' . Core::getSQLCount() . ') - ' . (($this->getQuery() instanceof Criteria) ? $this->getQuery()->getAction() : 'unknown'), 'B2DB');
                 }
 
-                $res = $this->statement->execute($values);
-
-                if (!$res) {
-                    $error = $this->statement->errorInfo();
-                    if (Core::isDebugMode()) {
-                        Core::sqlHit($this, $pretime);
-                    }
-                    throw new Exception($error[2], $this->printSQL());
-                }
-                if (Core::isDebugLoggingEnabled())
-                    \caspar\core\Logging::log('done', 'B2DB');
-
-                if ($this->getCriteria() instanceof Criteria && $this->getCriteria()->action == 'insert') {
-                    if (Core::getDriver() == 'mysql') {
-                        $this->insert_id = Core::getDBLink()->lastInsertId();
-                    } elseif (Core::getDriver() == 'pgsql') {
-                        $this->insert_id = Core::getDBLink()->lastInsertId(Core::getTablePrefix() . $this->getCriteria()->getTable()->getB2DBName() . '_id_seq');
-                        if (Core::isDebugLoggingEnabled()) {
-                            \caspar\core\Logging::log('sequence: ' . Core::getTablePrefix() . $this->getCriteria()->getTable()->getB2DBName() . '_id_seq', 'b2db');
-                            \caspar\core\Logging::log('id is: ' . $this->insert_id, 'b2db');
-                        }
-                    }
-                }
-
-                $retval = new Resultset($this);
-
-                if (Core::isDebugMode())
-                    Core::sqlHit($this, $pretime);
-
-                if (!$this->getCriteria() || $this->getCriteria()->action != 'select') {
-                    $this->statement->closeCursor();
-                }
-                return $retval;
-            } catch (\Exception $e) {
-                throw $e;
+                $previous_time = Core::getDebugTime();
             }
+
+            $res = $this->statement->execute($values);
+
+            if (!$res) {
+                $error = $this->statement->errorInfo();
+                if (Core::isDebugMode()) {
+                    Core::sqlHit($this, $previous_time);
+                }
+                throw new Exception($error[2], $this->printSQL());
+            }
+            if (Core::isDebugLoggingEnabled() && class_exists('\\caspar\\core\\Logging')) {
+                \caspar\core\Logging::log('done', 'B2DB');
+            }
+
+            if ($this->getQuery() instanceof Query && $this->getQuery()->isInsert()) {
+                if (Core::getDriver() == Core::DRIVER_MYSQL) {
+                    $this->insert_id = Core::getDBLink()->lastInsertId();
+                } elseif (Core::getDriver() == Core::DRIVER_POSTGRES) {
+                    $this->insert_id = Core::getDBLink()->lastInsertId(Core::getTablePrefix() . $this->getQuery()->getTable()->getB2DBName() . '_id_seq');
+                    if (Core::isDebugLoggingEnabled() && class_exists('\\caspar\\core\\Logging')) {
+                        \caspar\core\Logging::log('sequence: ' . Core::getTablePrefix() . $this->getQuery()->getTable()->getB2DBName() . '_id_seq', 'b2db');
+                        \caspar\core\Logging::log('id is: ' . $this->insert_id, 'b2db');
+                    }
+                }
+            }
+
+            $return_value = new Resultset($this);
+
+            if (Core::isDebugMode()) {
+                Core::sqlHit($this, $previous_time);
+            }
+
+            if (!$this->getQuery() || $this->getQuery()->isSelect()) {
+                $this->statement->closeCursor();
+            }
+
+            return $return_value;
         }
 
         /**
          * Returns the criteria object
          *
-         * @return Criteria
+         * @return Query
          */
-        public function getCriteria()
+        public function getQuery()
         {
-            return $this->crit;
+            return $this->query;
         }
 
         /**
@@ -183,34 +177,26 @@
          */
         protected function _prepare()
         {
-            try {
-                if (!Core::getDBLink() instanceof \PDO) {
-                    throw new Exception('Connection not up, can\'t prepare the statement');
-                }
-                if ($this->crit instanceof Criteria) {
-                    $this->statement = Core::getDBLink()->prepare($this->crit->getSQL());
-                } else {
-                    $this->statement = Core::getDBLink()->prepare($this->custom_sql);
-                }
-            } catch (\Exception $e) {
-                throw $e;
+            if (!Core::getDBlink() instanceof \PDO) {
+                throw new Exception('Connection not up, can\'t prepare the statement');
             }
+
+            $this->statement = Core::getDBlink()->prepare($this->query->getSql());
         }
 
         public function printSQL()
         {
             $str = '';
-            if ($this->getCriteria() instanceof Criteria) {
-                $str .= $this->crit->getSQL();
-                foreach ($this->crit->getValues() as $val) {
-                    if (is_null($val)) {
-                        $val = 'null';
-                    } elseif (!is_int($val)) {
-                        $val = '\'' . $val . '\'';
-                    }
-                    $str = substr_replace($str, $val, mb_strpos($str, '?'), 1);
+            $str .= $this->query->getSql();
+            foreach ($this->query->getValues() as $val) {
+                if (is_null($val)) {
+                    $val = 'null';
+                } elseif (!is_int($val)) {
+                    $val = '\'' . $val . '\'';
                 }
+                $str = substr_replace($str, $val, mb_strpos($str, '?'), 1);
             }
+
             return $str;
         }
 

@@ -39,7 +39,6 @@
                 $this->state = self::DB_TRANSACTION_STARTED;
                 Core::setTransaction(true);
             }
-            return $this;
         }
 
         public function __destruct()
