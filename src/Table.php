@@ -34,7 +34,7 @@
 
         protected $b2db_alias;
 
-        protected $_cached_entities = array();
+        protected $cached_entities = array();
 
         protected $columns;
 
@@ -1121,7 +1121,7 @@
             if (Core::getCacheEntities()) {
                 switch (Core::getCacheEntitiesStrategy()) {
                     case Core::CACHE_TYPE_INTERNAL:
-                        $this->_cached_entities[$id] = $object;
+                        $this->cached_entities[$id] = $object;
                         break;
 
                     case Core::CACHE_TYPE_MEMCACHED:
@@ -1136,7 +1136,7 @@
             if ($this->hasCachedB2DBObject($id)) {
                 switch (Core::getCacheEntitiesStrategy()) {
                     case Core::CACHE_TYPE_INTERNAL:
-                        unset($this->_cached_entities[$id]);
+                        unset($this->cached_entities[$id]);
                         break;
 
                     case Core::CACHE_TYPE_MEMCACHED:
@@ -1150,7 +1150,7 @@
         {
             switch (Core::getCacheEntitiesStrategy()) {
                 case Core::CACHE_TYPE_INTERNAL:
-                    return array_key_exists($id, $this->_cached_entities);
+                    return array_key_exists($id, $this->cached_entities);
 
                 case Core::CACHE_TYPE_MEMCACHED:
                     return Core::getCacheEntitiesObject()->has('b2db.' . get_called_class() . '.' . $id);
@@ -1161,7 +1161,7 @@
         {
             switch (Core::getCacheEntitiesStrategy()) {
                 case Core::CACHE_TYPE_INTERNAL:
-                    $this->_cached_entities = [];
+                    $this->cached_entities = [];
                     break;
 
                 case Core::CACHE_TYPE_MEMCACHED:
@@ -1177,7 +1177,7 @@
         {
             switch (Core::getCacheEntitiesStrategy()) {
                 case Core::CACHE_TYPE_INTERNAL:
-                    return $this->_cached_entities[$id];
+                    return $this->cached_entities[$id];
 
                 case Core::CACHE_TYPE_MEMCACHED:
                     return Core::getCacheEntitiesObject()->get('b2db.' . get_called_class() . '.' . $id);
