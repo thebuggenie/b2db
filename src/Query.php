@@ -236,7 +236,7 @@
          * @param mixed  $additional
          * @param string $special
          *
-         * @return Query
+         * @return Criteria
          */
         public function where($column, $value = '', $operator = Criterion::EQUALS, $variable = null, $additional = null, $special = null): self
         {
@@ -249,7 +249,7 @@
             $column->setQuery($this);
             $this->criteria[] = $column;
 
-            return $this;
+            return $column;
         }
 
 	    /**
@@ -262,7 +262,7 @@
 	     * @param string $additional
 	     * @param string $special
 	     *
-	     * @return Query
+	     * @return Criteria
 	     */
         public function and($column, $value = '', $operator = Criterion::EQUALS, $variable = null, $additional = null, $special = null): self
         {
@@ -270,11 +270,11 @@
 		        throw new Exception('Cannot combine two selection types (AND/OR) in the same Query. Use sub-criteria instead');
 	        }
 
-	        $this->where($column, $value, $operator, $variable, $additional, $special);
+	        $criteria = $this->where($column, $value, $operator, $variable, $additional, $special);
 
 	        $this->mode = query::MODE_AND;
 
-	        return $this;
+	        return $criteria;
         }
 
 	    /**
@@ -287,7 +287,7 @@
 	     * @param string $additional
 	     * @param string $special
 	     *
-	     * @return Query
+	     * @return Criteria
 	     */
         public function or($column, $value = '', $operator = Criterion::EQUALS, $variable = null, $additional = null, $special = null): self
         {
@@ -295,11 +295,11 @@
 		        throw new Exception('Cannot combine two selection types (AND/OR) in the same Query. Use sub-criteria instead');
 	        }
 
-	        $this->where($column, $value, $operator, $variable, $additional, $special);
+	        $criteria = $this->where($column, $value, $operator, $variable, $additional, $special);
 
 	        $this->mode = query::MODE_OR;
 
-	        return $this;
+	        return $criteria;
         }
 
         /**
@@ -605,7 +605,7 @@
         public function generateSelectSQL($all = false)
         {
             if ($this->sql === null) {
-            	$this->_generateSelectionColumns();
+            	$this->detectDistinct();
 	            $this->action = QueryInterface::ACTION_SELECT;
             	$sql_generator = new SqlGenerator($this);
 
@@ -625,7 +625,7 @@
         public function generateUpdateSQL(Insertion $insertion)
         {
             if ($this->sql === null) {
-            	$this->_generateSelectionColumns();
+            	$this->detectDistinct();
 	            $this->action = QueryInterface::ACTION_UPDATE;
 	            $sql_generator = new SqlGenerator($this);
 
@@ -644,7 +644,7 @@
         public function generateInsertSQL(Insertion $insertion)
         {
             if ($this->sql === null) {
-            	$this->_generateSelectionColumns();
+            	$this->detectDistinct();
 	            $this->action = QueryInterface::ACTION_INSERT;
 	            $sql_generator = new SqlGenerator($this);
 
@@ -662,7 +662,7 @@
         public function generateDeleteSQL()
         {
             if ($this->sql === null) {
-            	$this->_generateSelectionColumns();
+            	$this->detectDistinct();
 	            $this->action = QueryInterface::ACTION_DELETE;
             	$sql_generator = new SqlGenerator($this);
 
@@ -680,7 +680,7 @@
         public function generateCountSQL()
         {
             if ($this->sql === null) {
-            	$this->_generateSelectionColumns();
+            	$this->detectDistinct();
             	$this->action = QueryInterface::ACTION_COUNT;
             	$sql_generator = new SqlGenerator($this);
 
@@ -712,7 +712,7 @@
 	    /**
 	     * (Re-)generate selection columns based on criteria selection columns
 	     */
-        protected function _generateSelectionColumns()
+        protected function detectDistinct()
         {
         	foreach ($this->criteria as $criteria) {
         		if ($criteria->isDistinct()) {

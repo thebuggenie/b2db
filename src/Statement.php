@@ -68,7 +68,7 @@
         public function __construct($query)
         {
             $this->query = $query;
-            $this->_prepare();
+            $this->prepare();
         }
 
         /**
@@ -175,7 +175,7 @@
         /**
          * Prepare the statement
          */
-        protected function _prepare()
+        protected function prepare()
         {
             if (!Core::getDBlink() instanceof \PDO) {
                 throw new Exception('Connection not up, can\'t prepare the statement');

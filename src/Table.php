@@ -161,7 +161,7 @@
          * @param Table $table
          * @param string $key
          */
-        protected function _addForeignKeyColumn($column, Table $table, $key = null)
+        protected function addForeignKeyColumn($column, Table $table, $key = null)
         {
             $add_table = clone $table;
             $key = ($key !== null) ? $key : $add_table->getIdColumn();

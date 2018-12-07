@@ -208,7 +208,7 @@
 	     *
 	     * @return string
 	     */
-	    protected function _generateSelectAllSQL()
+	    protected function generateSelectAllSQL()
 	    {
 		    $sql_parts = [];
 		    foreach ($this->query->getSelectionColumns() as $selection) {
@@ -252,7 +252,7 @@
 			    $sql .= implode(', ', $sql_parts);
 		    } else {
 			    $this->addAllSelectColumns();
-			    $sql .= $this->_generateSelectAllSQL();
+			    $sql .= $this->generateSelectAllSQL();
 		    }
 
 		    return $sql;
