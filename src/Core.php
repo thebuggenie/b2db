@@ -29,17 +29,17 @@
          */
         protected static $db_connection = null;
 
-        protected static $_hostname;
+        protected static $hostname;
 
-        protected static $_username;
+        protected static $username;
 
-        protected static $_password;
+        protected static $password;
 
-        protected static $_database_name;
+        protected static $database_name;
 
-        protected static $_driver;
+        protected static $driver;
 
-        protected static $_port;
+        protected static $port;
 
         protected static $dsn;
 
@@ -428,7 +428,7 @@
                 $dsn .= ';port=' . self::getPort();
             }
             $dsn .= ';dbname=' . self::getDatabaseName();
-            self::$_dsn = $dsn;
+            self::$dsn = $dsn;
         }
 
         /**
@@ -451,7 +451,7 @@
          */
         public static function setHostname($hostname)
         {
-            self::$_hostname = $hostname;
+            self::$hostname = $hostname;
         }
 
         /**
@@ -461,7 +461,7 @@
          */
         public static function getHostname()
         {
-            return self::$_hostname;
+            return self::$hostname;
         }
 
         /**
@@ -471,7 +471,7 @@
          */
         public static function getPort()
         {
-            return self::$_port;
+            return self::$port;
         }
 
         /**
@@ -481,7 +481,7 @@
          */
         public static function setPort($port)
         {
-            self::$_port = $port;
+            self::$port = $port;
         }
 
         /**
@@ -491,7 +491,7 @@
          */
         public static function setUsername($username)
         {
-            self::$_username = $username;
+            self::$username = $username;
         }
 
         /**
@@ -501,7 +501,7 @@
          */
         public static function getUsername()
         {
-            return self::$_username;
+            return self::$username;
         }
 
         /**
@@ -531,7 +531,7 @@
          */
         public static function setPassword($password)
         {
-            self::$_password = $password;
+            self::$password = $password;
         }
 
         /**
@@ -541,7 +541,7 @@
          */
         public static function getPassword()
         {
-            return self::$_password;
+            return self::$password;
         }
 
         /**
@@ -551,8 +551,8 @@
          */
         public static function setDatabaseName($database_name)
         {
-            self::$_database_name = $database_name;
-            self::$_dsn = null;
+            self::$database_name = $database_name;
+            self::$dsn = null;
         }
 
         /**
@@ -562,7 +562,7 @@
          */
         public static function getDatabaseName()
         {
-            return self::$_database_name;
+            return self::$database_name;
         }
 
         /**
@@ -575,7 +575,7 @@
             if (self::isDriverSupported($driver) == false) {
                 throw new Exception('The selected database is not supported: "' . $driver . '".');
             }
-            self::$_driver = $driver;
+            self::$driver = $driver;
         }
 
         /**
@@ -585,7 +585,7 @@
          */
         public static function getDriver()
         {
-            return self::$_driver;
+            return self::$driver;
         }
 
         public static function hasDriver()
