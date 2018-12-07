@@ -312,13 +312,13 @@
 	    /**
 	     * Generate the "update" part of the query
 	     *
-	     * @param Insertion $insertion
+	     * @param Update $update
 	     * @return string
 	     */
-	    protected function generateUpdateSQL(Insertion $insertion)
+	    protected function generateUpdateSQL(Update $update)
 	    {
 		    $updates = [];
-		    foreach ($insertion->getValues() as $column => $value) {
+		    foreach ($update->getValues() as $column => $value) {
 			    $column = mb_substr($column, mb_strpos($column, '.') + 1);
 			    $prefix = Query::quoteIdentifier($column);
 			    $updates[] = $prefix . Criterion::EQUALS . '?';
@@ -332,16 +332,16 @@
 	    /**
 	     * Generate an "update" query
 	     *
-	     * @param Insertion $insertion
+	     * @param Update $update
 	     * @return string
 	     * @throws Exception
 	     */
-	    public function getUpdateSQL(Insertion $insertion)
+	    public function getUpdateSQL(Update $update)
 	    {
 		    if (!$this->query->getTable() instanceof Table) {
 			    throw new Exception('Trying to generate sql when no table is being used.');
 		    }
-		    $sql = $this->generateUpdateSQL($insertion);
+		    $sql = $this->generateUpdateSQL($update);
 		    $sql .= $this->generateWhereSQL();
 
 		    return $sql;

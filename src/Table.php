@@ -482,17 +482,21 @@
             return Statement::getPreparedStatement($query)->execute();
         }
 
-        /**
-         * Perform an SQL update
-         *
-         * @param Insertion $insertion
-         *
-         * @return Resultset
-         */
-        public function rawUpdate(Insertion $insertion)
+	    /**
+	     * Perform an SQL update
+	     *
+	     * @param Update $update
+	     *
+	     * @param Query|null $query
+	     * @return Resultset
+	     * @throws Exception
+	     */
+        public function rawUpdate(Update $update, Query $query = null)
         {
-            $query = new Query($this);
-            $query->generateUpdateSQL($insertion);
+        	if ($query === null) {
+	            $query = new Query($this);
+	        }
+            $query->generateUpdateSQL($update);
 
 	        $value = Statement::getPreparedStatement($query)->execute();
             $this->clearB2DBCachedObjects();
@@ -503,18 +507,17 @@
 	    /**
 	     * Perform an SQL update
 	     *
-	     * @param Insertion $insertion
+	     * @param Update $update
 	     * @param integer $id
 	     *
 	     * @return Resultset
-	     * @throws \Exception
 	     */
-        public function rawUpdateById(Insertion $insertion, $id)
+        public function rawUpdateById(Update $update, $id)
         {
         	$query = new Query($this);
         	$query->where($this->id_column, $id);
             $query->setLimit(1);
-            $query->generateUpdateSQL($insertion);
+            $query->generateUpdateSQL($update);
 
 	        $value = Statement::getPreparedStatement($query)->execute();
             $this->deleteB2DBObjectFromCache($id);
@@ -575,10 +578,7 @@
             }
         }
 
-        protected function setupIndexes()
-        {
-
-        }
+        protected function setupIndexes() {}
 
         public function createIndexes()
         {

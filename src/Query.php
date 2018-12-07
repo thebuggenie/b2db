@@ -618,18 +618,18 @@
 	    /**
 	     * Returns the SQL string for the current criteria
 	     *
-	     * @param Insertion $insertion
+	     * @param Update $update
 	     * @return string
 	     * @throws Exception
 	     */
-        public function generateUpdateSQL(Insertion $insertion)
+        public function generateUpdateSQL(Update $update)
         {
             if ($this->sql === null) {
             	$this->detectDistinct();
 	            $this->action = QueryInterface::ACTION_UPDATE;
 	            $sql_generator = new SqlGenerator($this);
 
-                $this->sql = $sql_generator->getUpdateSQL($insertion);
+                $this->sql = $sql_generator->getUpdateSQL($update);
             }
 
             return $this->sql;
