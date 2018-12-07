@@ -71,7 +71,8 @@
 			    } else {
 				    $sql = $sql_parts[0];
 			    }
-			    $sql .= ' WHERE ' . $sql;
+
+			    $sql = ' WHERE ' . $sql;
 		    }
 
 		    return $sql;

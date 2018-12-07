@@ -1191,7 +1191,7 @@
         {
         	$name = $this->getSqlTableName();
 	        $alias = $this->getB2DBAlias();
-	        $sql = Query::quoteIdentifier($name) . ' ' . Query::quoteIdentifier($alias);
+	        $sql = $name . ' ' . Query::quoteIdentifier($alias);
 
 	        return $sql;
         }

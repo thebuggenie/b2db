@@ -238,7 +238,7 @@
          *
          * @return Query
          */
-        public function where($column, $value = '', $operator = Criterion::EQUALS, $variable = '', $additional = '', $special = ''): self
+        public function where($column, $value = '', $operator = Criterion::EQUALS, $variable = null, $additional = null, $special = null): self
         {
             if (!$column instanceof Criteria) {
                 $criteria = new Criteria();
@@ -264,7 +264,7 @@
 	     *
 	     * @return Query
 	     */
-        public function and($column, $value = '', $operator = Criterion::EQUALS, $variable = '', $additional = '', $special = ''): self
+        public function and($column, $value = '', $operator = Criterion::EQUALS, $variable = null, $additional = null, $special = null): self
         {
 	        if ($this->mode == query::MODE_OR) {
 		        throw new Exception('Cannot combine two selection types (AND/OR) in the same Query. Use sub-criteria instead');
@@ -289,7 +289,7 @@
 	     *
 	     * @return Query
 	     */
-        public function or($column, $value = '', $operator = Criterion::EQUALS, $variable = '', $additional = '', $special = ''): self
+        public function or($column, $value = '', $operator = Criterion::EQUALS, $variable = null, $additional = null, $special = null): self
         {
 	        if ($this->mode == query::MODE_AND) {
 		        throw new Exception('Cannot combine two selection types (AND/OR) in the same Query. Use sub-criteria instead');
@@ -593,7 +593,7 @@
 
 	    public function hasOffset()
 	    {
-		    return (bool) $this->offset !== null;
+		    return (bool) $this->offset;
 	    }
 
 	    /**

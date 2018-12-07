@@ -70,7 +70,7 @@
          *
          * @return Criteria
          */
-        public function where($column, $value = '', $operator = Criterion::EQUALS, $variable = '', $additional = '', $special = ''): self
+        public function where($column, $value = '', $operator = Criterion::EQUALS, $variable = null, $additional = null, $special = null): self
         {
 	        if (!$column instanceof CriterionProvider) {
 		        $column = new Criterion($column, $value, $operator, $variable, $additional, $special);
@@ -93,7 +93,7 @@
 	     *
 	     * @return Criteria
 	     */
-	    public function and($column, $value = '', $operator = Criterion::EQUALS, $variable = '', $additional = '', $special = ''): self
+	    public function and($column, $value = '', $operator = Criterion::EQUALS, $variable = null, $additional = null, $special = null): self
 	    {
 		    if ($this->mode == query::MODE_OR) {
 			    throw new Exception('Cannot combine two selection types (AND/OR) in the same Criteria. Use multiple sub-criteria instead');
@@ -117,7 +117,7 @@
 	     * @param string $special
 	     * @return Criteria
 	     */
-	    public function or($column, $value = null, $operator = Criterion::EQUALS, $variable = '', $additional = '', $special = ''): self
+	    public function or($column, $value = null, $operator = Criterion::EQUALS, $variable = null, $additional = null, $special = null): self
 	    {
 		    if ($this->mode == query::MODE_AND) {
 			    throw new Exception('Cannot combine two selection types (AND/OR) in the same Criteria. Use multiple sub-criteria instead');

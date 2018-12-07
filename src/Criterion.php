@@ -241,7 +241,7 @@
 		    $column = ($strip) ? Table::getColumnName($this->column) : $this->getQuery()->getSelectionColumn($this->column);
 		    $initial_sql = Query::quoteIdentifier($column);
 
-		    if ($this->special !== null) {
+		    if ($this->special) {
 			    $sql = "{$this->special}({$initial_sql})";
 		    } else {
 		    	$sql = $initial_sql;

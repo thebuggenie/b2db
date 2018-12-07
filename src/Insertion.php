@@ -86,7 +86,7 @@
 	        }
         }
 
-        public function add($column, $value, $variable = '')
+        public function add($column, $value, $variable = null)
         {
         	$this->criteria[$column] = new Criterion($column, $value, null, $variable);
         }
