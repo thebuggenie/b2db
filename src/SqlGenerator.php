@@ -44,26 +44,29 @@
 	     *
 	     * @param mixed $value
 	     */
-	    protected function _addValue($value)
+	    protected function addValue($value)
 	    {
-		    if (is_bool($value)) {
-			    if (Core::getDriver() == Core::DRIVER_MYSQL) {
-				    $this->values[] = (int) $value;
-			    } elseif (Core::getDriver() == Core::DRIVER_POSTGRES) {
-				    $this->values[] = ($value) ? 'true' : 'false';
+		    if (is_array($value)) {
+			    foreach ($value as $single_value) {
+				    $this->addValue($single_value);
 			    }
 		    } else {
-			    $this->values[] = $value;
+			    $this->values[] = $this->query->getDatabaseValue($value);
 		    }
 	    }
 
-	    protected function generateWherePartSql()
+	    public function getValues()
+	    {
+	    	return $this->values;
+	    }
+
+	    protected function generateWherePartSql($strip = false)
 	    {
 	    	$sql = '';
 		    if ($this->query->hasCriteria()) {
 		    	$sql_parts = [];
 			    foreach ($this->query->getCriteria() as $criteria) {
-				    $sql_parts[] = $criteria->getSql();
+				    $sql_parts[] = $criteria->getSql($strip);
 			    }
 
 			    if (count($sql_parts) > 1) {
@@ -82,7 +85,7 @@
 	    {
 	    	$sql = '';
 
-		    if ($this->query->hasSortGroups() || ($this->query->hasSortOrders() && $this->query->isCount())) {
+		    if ($this->query->hasSortGroups()) {
 			    $group_columns = [];
 			    $groups = [];
 			    foreach ($this->query->getSortGroups() as $sort_group) {
@@ -98,7 +101,14 @@
 				    foreach ($this->query->getSortOrders() as $sort_order) {
 					    $column_name = $this->query->getSelectionColumn($sort_order->getColumn());
 					    if (!array_key_exists($column_name, $group_columns)) {
-						    $sort_orders[] = Query::quoteIdentifier($column_name) . ' ';
+                            $sort_order_column = Query::quoteIdentifier($column_name) . ' ';
+						    $sort_orders[$sort_order_column] = $sort_order_column;
+					    }
+				    }
+				    foreach ($this->query->getJoins() as $join) {
+				    	$join_sort = Query::quoteIdentifier($join->getLeftColumn()) . ' ';
+				    	if (!array_key_exists($join_sort, $sort_orders)) {
+				    		$sort_orders[$join_sort] = $join_sort;
 					    }
 				    }
 				    $sql .= implode(', ', $sort_orders);
@@ -137,14 +147,15 @@
 	    	return $sql;
 	    }
 
-	    /**
-	     * Generate the "where" part of the query
-	     *
-	     * @return string
-	     */
-	    protected function generateWhereSQL()
+        /**
+         * Generate the "where" part of the query
+         *
+         * @param bool $strip
+         * @return string
+         */
+	    protected function generateWhereSQL($strip = false)
 	    {
-		    $sql = $this->generateWherePartSql();
+		    $sql = $this->generateWherePartSql($strip);
 		    $sql .= $this->generateGroupPartSql();
 		    $sql .= $this->generateOrderByPartSql();
 		    if ($this->query->isSelect()) {
@@ -175,7 +186,11 @@
 				    $sql_parts = [];
 
 				    foreach ($join->getAdditionalCriteria() as $criteria) {
+				    	$criteria->setQuery($this->query);
 					    $sql_parts[] = $criteria->getSql();
+					    foreach ($criteria->getValues() as $value) {
+                            $this->query->addValue($value);
+                        }
 				    }
 
 				    $sql .= ' AND ' . join(' AND ', $sql_parts);
@@ -323,9 +338,9 @@
 			    $prefix = Query::quoteIdentifier($column);
 			    $updates[] = $prefix . Criterion::EQUALS . '?';
 
-			    $this->_addValue($value);
+			    $this->addValue($value);
 		    }
-		    $sql = 'UPDATE ' . Query::quoteIdentifier($this->getTable()->getSqlTableName()) . ' SET ' . implode(', ', $updates);
+		    $sql = 'UPDATE ' . $this->getTable()->getSqlTableName() . ' SET ' . implode(', ', $updates);
 		    return $sql;
 	    }
 
@@ -342,7 +357,7 @@
 			    throw new Exception('Trying to generate sql when no table is being used.');
 		    }
 		    $sql = $this->generateUpdateSQL($update);
-		    $sql .= $this->generateWhereSQL();
+		    $sql .= $this->generateWhereSQL(true);
 
 		    return $sql;
 	    }
@@ -362,7 +377,7 @@
 
 		    $inserts = [];
 		    $values = [];
-		    $table_name = Query::quoteIdentifier($this->getTable()->getSqlTableName());
+		    $table_name = $this->getTable()->getSqlTableName();
 
 		    foreach ($insertion->getValues() as $column => $value) {
 			    $column = mb_substr($column, mb_strpos($column, '.') + 1);
@@ -372,7 +387,7 @@
 				    $values[] = '@' . $insertion->getVariable($column);
 			    } else {
 				    $values[] = '?';
-				    $this->_addValue($value);
+				    $this->addValue($value);
 			    }
 		    }
 
@@ -394,8 +409,8 @@
 		    if (!$this->query->getTable() instanceof Table) {
 			    throw new Exception('Trying to generate sql when no table is being used.');
 		    }
-		    $sql = 'DELETE FROM ' . Query::quoteIdentifier($this->getTable()->getSqlTableName());
-		    $sql .= $this->generateWhereSQL();
+		    $sql = 'DELETE FROM ' . $this->getTable()->getSqlTableName();
+		    $sql .= $this->generateWhereSQL(true);
 
 		    return $sql;
 	    }

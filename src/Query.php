@@ -131,27 +131,27 @@
 
         public function isCount()
         {
-        	return (bool) $this->action == QueryInterface::ACTION_COUNT;
+        	return (bool) ($this->action == QueryInterface::ACTION_COUNT);
         }
 
         public function isSelect()
         {
-        	return (bool) $this->action == QueryInterface::ACTION_SELECT;
+        	return (bool) ($this->action == QueryInterface::ACTION_SELECT);
         }
 
         public function isDelete()
         {
-        	return (bool) $this->action == QueryInterface::ACTION_DELETE;
+        	return (bool) ($this->action == QueryInterface::ACTION_DELETE);
         }
 
         public function isInsert()
         {
-        	return (bool) $this->action == QueryInterface::ACTION_INSERT;
+        	return (bool) ($this->action == QueryInterface::ACTION_INSERT);
         }
 
         public function isUpdate()
         {
-        	return (bool) $this->action == QueryInterface::ACTION_UPDATE;
+        	return (bool) ($this->action == QueryInterface::ACTION_UPDATE);
         }
 
         /**
@@ -161,15 +161,55 @@
          */
         public function getValues()
         {
-	        $values = [];
+	        $values = $this->values;
 
 	        foreach ($this->criteria as $criteria) {
 		        foreach ($criteria->getValues() as $value) {
-			        $values[] = $value;
+		            if (is_array($value)) {
+		                foreach ($value as $single_value) {
+		                    $values[] = $single_value;
+                        }
+                    } else {
+                        $values[] = $value;
+                    }
 		        }
 	        }
 
 	        return $values;
+        }
+
+	    /**
+	     * Get the quoted / converted value depending on database type
+	     *
+	     * @param mixed $value
+	     * @return int|mixed|string
+	     */
+	    public function getDatabaseValue($value)
+	    {
+		    if (is_bool($value)) {
+			    if (Core::getDriver() == Core::DRIVER_MYSQL) {
+				    return (int) $value;
+			    } elseif (Core::getDriver() == Core::DRIVER_POSTGRES) {
+				    return ($value) ? 'true' : 'false';
+			    }
+		    }
+		    return $value;
+	    }
+
+	    /**
+	     * Add a value to the value container
+	     *
+	     * @param mixed $value
+	     */
+	    public function addValue($value)
+        {
+        	if (is_array($value)) {
+        		foreach ($value as $single_value) {
+        			$this->addValue($single_value);
+		        }
+	        } else {
+        		$this->values[] = $this->getDatabaseValue($value);
+	        }
         }
 
         /**
@@ -238,7 +278,7 @@
          *
          * @return Criteria
          */
-        public function where($column, $value = '', $operator = Criterion::EQUALS, $variable = null, $additional = null, $special = null): self
+        public function where($column, $value = '', $operator = Criterion::EQUALS, $variable = null, $additional = null, $special = null): Criteria
         {
             if (!$column instanceof Criteria) {
                 $criteria = new Criteria();
@@ -264,7 +304,7 @@
 	     *
 	     * @return Criteria
 	     */
-        public function and($column, $value = '', $operator = Criterion::EQUALS, $variable = null, $additional = null, $special = null): self
+        public function and($column, $value = '', $operator = Criterion::EQUALS, $variable = null, $additional = null, $special = null): Criteria
         {
 	        if ($this->mode == query::MODE_OR) {
 		        throw new Exception('Cannot combine two selection types (AND/OR) in the same Query. Use sub-criteria instead');
@@ -289,7 +329,7 @@
 	     *
 	     * @return Criteria
 	     */
-        public function or($column, $value = '', $operator = Criterion::EQUALS, $variable = null, $additional = null, $special = null): self
+        public function or($column, $value = '', $operator = Criterion::EQUALS, $variable = null, $additional = null, $special = null): Criteria
         {
 	        if ($this->mode == query::MODE_AND) {
 		        throw new Exception('Cannot combine two selection types (AND/OR) in the same Query. Use sub-criteria instead');
@@ -532,7 +572,7 @@
 
         public function hasLimit()
         {
-        	return (bool) $this->limit !== null;
+        	return (bool) ($this->limit !== null);
         }
 
         /**
@@ -630,6 +670,7 @@
 	            $sql_generator = new SqlGenerator($this);
 
                 $this->sql = $sql_generator->getUpdateSQL($update);
+	            $this->values = $sql_generator->getValues();
             }
 
             return $this->sql;
@@ -649,6 +690,7 @@
 	            $sql_generator = new SqlGenerator($this);
 
                 $this->sql = $sql_generator->getInsertSQL($insertion);
+                $this->values = $sql_generator->getValues();
             }
 
             return $this->sql;
@@ -749,6 +791,9 @@
 
         public function getMode()
         {
+        	if (!$this->mode) {
+        		$this->mode = self::MODE_AND;
+	        }
         	return $this->mode;
         }
 

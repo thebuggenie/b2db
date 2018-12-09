@@ -83,13 +83,13 @@
                 if ($operator !== null) {
                     $this->operator = $operator;
                 }
-                if ($variable !== null) {
+                if ($variable) {
                     $this->variable = $variable;
                 }
-                if ($additional !== null) {
+                if ($additional) {
                     $this->additional = $additional;
                 }
-                if ($special !== null) {
+                if ($special) {
                     $this->special = $special;
                 }
             }
@@ -253,7 +253,7 @@
 			    $this->operator = self::IN;
 		    }
 
-		    $sql .= ' ' . $this->operator;
+		    $sql .= " {$this->operator} ";
 
 		    if (!$this->isNullTypeOperator()) {
 			    if (is_array($this->value)) {

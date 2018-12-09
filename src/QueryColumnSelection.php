@@ -39,13 +39,13 @@
             $this->query = $query;
             $this->column = $column;
             $this->alias = $alias;
-            if ($variable !== null) {
+            if ($variable) {
                 $this->variable = $variable;
             }
-            if ($additional !== null) {
+            if ($additional) {
                 $this->additional = $additional;
             }
-            if ($special !== null) {
+            if ($special) {
                 $this->special = $special;
             }
         }
@@ -94,7 +94,7 @@
 
 	    public function hasAdditional()
 	    {
-	    	return (bool) $this->additional != '';
+	    	return (bool) ($this->additional != '');
 	    }
 
 	    /**
@@ -107,7 +107,7 @@
 
 	    public function isSpecial()
 	    {
-	    	return (bool) $this->special != '';
+	    	return (bool) ($this->special != '');
 	    }
 
     }

@@ -81,27 +81,27 @@
 
 	    public function isCount()
 	    {
-		    return (bool) $this->action == QueryInterface::ACTION_COUNT;
+		    return (bool) ($this->action == QueryInterface::ACTION_COUNT);
 	    }
 
 	    public function isSelect()
 	    {
-		    return (bool) $this->action == QueryInterface::ACTION_SELECT;
+		    return (bool) ($this->action == QueryInterface::ACTION_SELECT);
 	    }
 
 	    public function isDelete()
 	    {
-		    return (bool) $this->action == QueryInterface::ACTION_DELETE;
+		    return (bool) ($this->action == QueryInterface::ACTION_DELETE);
 	    }
 
 	    public function isInsert()
 	    {
-		    return (bool) $this->action == QueryInterface::ACTION_INSERT;
+		    return (bool) ($this->action == QueryInterface::ACTION_INSERT);
 	    }
 
 	    public function isUpdate()
 	    {
-		    return (bool) $this->action == QueryInterface::ACTION_UPDATE;
+		    return (bool) ($this->action == QueryInterface::ACTION_UPDATE);
 	    }
 
     }

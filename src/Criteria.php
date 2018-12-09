@@ -150,7 +150,7 @@
 	        }
 
             if (count($sql_parts) > 1) {
-            	return '(' . join(" {$this->mode} ", $sql_parts) . ')';
+            	return '(' . join(" {$this->getMode()} ", $sql_parts) . ')';
             } else {
             	return $sql_parts[0];
             }
@@ -177,6 +177,9 @@
          */
         public function getMode()
         {
+	        if (!$this->mode) {
+		        $this->mode = Query::MODE_AND;
+	        }
             return $this->mode;
         }
 

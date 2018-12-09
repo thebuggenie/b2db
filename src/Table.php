@@ -355,10 +355,14 @@
 	     * @param Query|null $query
 	     * @param mixed $join
 	     *
-	     * @return \b2db\Row
+	     * @return \b2db\Row|null
 	     */
         public function rawSelectById($id, Query $query = null, $join = 'all')
         {
+            if (!$id) {
+                return null;
+            }
+
             if (!$query instanceof Query) {
             	$query = new Query($this);
             }
@@ -474,7 +478,7 @@
          *
          * @return Resultset
          */
-        public function insert(Insertion $insertion)
+        public function rawInsert(Insertion $insertion)
         {
         	$query = new Query($this);
             $query->generateInsertSQL($insertion);
@@ -510,10 +514,14 @@
 	     * @param Update $update
 	     * @param integer $id
 	     *
-	     * @return Resultset
+	     * @return Resultset|null
 	     */
         public function rawUpdateById(Update $update, $id)
         {
+            if (!$id) {
+                return null;
+            }
+
         	$query = new Query($this);
         	$query->where($this->id_column, $id);
             $query->setLimit(1);
@@ -548,10 +556,14 @@
          *
          * @param integer $id
          *
-         * @return Resultset
+         * @return Resultset|null
          */
         public function rawDeleteById($id)
         {
+        	if (!$id) {
+        		return null;
+	        }
+
             $query = new Query($this);
             $query->where($this->id_column, $id);
             $query->generateDeleteSQL();
@@ -667,8 +679,13 @@
 
         public function saveObject(Saveable $object)
         {
-            $insertion = new Insertion();
             $id = $object->getB2DBID();
+            if ($id) {
+            	$update = new Update();
+            } else {
+	            $insertion = new Insertion();
+            }
+
             $changed = false;
 
             foreach ($this->getColumns() as $column) {
@@ -693,7 +710,7 @@
 
                 if ($id) {
                     $changed = true;
-                    $insertion->add($column['name'], $value);
+                    $update->add($column['name'], $value);
                 } elseif ($column['name'] != $this->getIdColumn()) {
                     $insertion->add($column['name'], $value);
                 }
@@ -701,11 +718,11 @@
 
             if ($id) {
                 if ($changed) {
-                    $this->rawUpdateById($insertion, $id);
+                    $this->rawUpdateById($update, $id);
                 }
                 $res_id = $id;
             } else {
-                $res = $this->insert($insertion);
+                $res = $this->rawinsert($insertion);
                 $res_id = $res->getInsertID();
             }
 
