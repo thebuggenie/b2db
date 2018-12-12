@@ -47,10 +47,14 @@
 
             foreach ($this->parts as $part) {
             	if ($part instanceof Criterion) {
-	                $values[] = $part->getValue();
+            	    if ($part->getValue() !== null) {
+                        $values[] = $part->getValue();
+                    }
 	            } else {
             		foreach ($part->getValues() as $value) {
-		                $values[] = $value;
+            		    if ($value !== null) {
+                            $values[] = $value;
+                        }
 		            }
 	            }
             }
@@ -133,10 +137,10 @@
 	    /**
 	     * Returns the SQL string for the current criteria
 	     *
-	     * @param bool $strip
+	     * @param bool $strip_table_name
 	     * @return string
 	     */
-        public function getSQL($strip = false)
+        public function getSQL($strip_table_name = false)
         {
         	$sql_parts = [];
         	foreach ($this->parts as $part) {
@@ -146,7 +150,7 @@
 			        $part->setQuery($this->query);
 		        }
 
-		        $sql_parts[] = $part->getSql($strip);
+		        $sql_parts[] = $part->getSql($strip_table_name);
 	        }
 
             if (count($sql_parts) > 1) {

@@ -23,7 +23,10 @@
     class Resultset implements \Countable
     {
 
-        protected $rows = array();
+	    /**
+	     * @var Row[]
+	     */
+        protected $rows = [];
 
         /**
          * @var QueryInterface
@@ -62,6 +65,9 @@
             }
         }
 
+	    /**
+	     * @return bool
+	     */
         protected function _next()
         {
             if ($this->int_ptr == $this->max_ptr) {
@@ -72,6 +78,9 @@
             }
         }
 
+	    /**
+	     * @return int
+	     */
         public function getCount()
         {
             return $this->max_ptr;
@@ -119,6 +128,9 @@
             }
         }
 
+	    /**
+	     * @return Row[]
+	     */
         public function getAllRows()
         {
             return $this->rows;
@@ -154,6 +166,9 @@
             $this->int_ptr = 0;
         }
 
+	    /**
+	     * @return Row
+	     */
         public function current()
         {
             $row = $this->getCurrentRow();

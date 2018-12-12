@@ -81,6 +81,10 @@
                 $this->column = $column;
                 $this->value = $value;
                 if ($operator !== null) {
+                    if ($operator == self::IN && !$value) {
+                        throw new Exception('Cannot use an empty value for WHERE IN criteria');
+                    }
+
                     $this->operator = $operator;
                 }
                 if ($variable) {
@@ -232,13 +236,13 @@
         	return in_array($this->operator, [self::IN, self::NOT_IN]);
         }
 
-	    public function getSql($strip = false)
+	    public function getSql($strip_table_name = false)
 	    {
 	    	if ($this->sql !== null) {
 	    		return $this->sql;
 		    }
 
-		    $column = ($strip) ? Table::getColumnName($this->column) : $this->getQuery()->getSelectionColumn($this->column);
+		    $column = ($strip_table_name) ? Table::getColumnName($this->column) : $this->getQuery()->getSelectionColumn($this->column);
 		    $initial_sql = Query::quoteIdentifier($column);
 
 		    if ($this->special) {
@@ -247,7 +251,7 @@
 		    	$sql = $initial_sql;
 		    }
 
-		    if (is_null($this->value) && !$this->isNullTypeOperator()) {
+		    if ($this->value === null && !$this->isNullTypeOperator()) {
 			    $this->operator = ($this->operator == self::EQUALS) ? self::IS_NULL : self::IS_NOT_NULL;
 		    } elseif (is_array($this->value) && $this->operator != self::NOT_IN) {
 			    $this->operator = self::IN;

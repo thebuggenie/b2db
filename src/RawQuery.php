@@ -15,7 +15,7 @@
 
         protected $columns;
 
-        protected $values;
+        protected $values = [];
 
         protected $sql;
 

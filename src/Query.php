@@ -208,7 +208,9 @@
         			$this->addValue($single_value);
 		        }
 	        } else {
-        		$this->values[] = $this->getDatabaseValue($value);
+                if ($value !== null) {
+                    $this->values[] = $this->getDatabaseValue($value);
+                }
 	        }
         }
 

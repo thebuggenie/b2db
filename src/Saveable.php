@@ -5,28 +5,16 @@
     /**
      * B2DB Saveable class, active record implementation for B2DB
      *
-     * @author Daniel Andre Eikeland <zegenie@zegeniestudios.net>
-     * @version 2.0
-     * @license http://www.opensource.org/licenses/mozilla1.1.php Mozilla Public License 1.1 (MPL 1.1)
-     * @package b2db
-     * @subpackage core
-     */
-
-    /**
-     * B2DB Saveable class, active record implementation for B2DB
-     * Can be implemented by objects to allow them to be passed to a B2DB table
-     * class for saving
-     *
      * @package b2db
      * @subpackage core
      */
     class Saveable
     {
 
-        protected $b2db_initial_values = array();
+        protected $b2db_initial_values = [];
 
         /**
-         * Return the associated B2DBTable for this class
+         * Return the associated Table class for this class
          *
          * @return Table
          */
@@ -36,6 +24,12 @@
             return $b2db_table_name::getTable();
         }
 
+	    /**
+	     * @param $id
+	     * @param $classname
+	     * @param Row|null $row
+	     * @return Saveable
+	     */
         public static function getB2DBCachedObjectIfAvailable($id, $classname, $row = null)
         {
             $has_cached = self::getB2DBTable()->hasCachedB2DBObject($id);
@@ -48,7 +42,7 @@
             return $object;
         }
 
-        protected function _b2dbLazycount($property)
+        protected function _b2dbLazyCount($property)
         {
             $relation_details = Core::getCachedEntityRelationDetails('\\'.get_class($this), $property);
             if (array_key_exists('manytomany', $relation_details) && $relation_details['manytomany']) {
@@ -60,7 +54,7 @@
             return $count;
         }
 
-        protected function _b2dbLazyload($property, $use_cache = true)
+        protected function _b2dbLazyLoad($property, $use_cache = true)
         {
             $relation_details = Core::getCachedEntityRelationDetails('\\'.get_class($this), $property);
             if ($relation_details['collection']) {

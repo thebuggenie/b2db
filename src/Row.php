@@ -21,7 +21,7 @@
     class Row implements \ArrayAccess
     {
 
-        protected $fields = array();
+        protected $fields = [];
 
         /**
          * Statement
@@ -32,11 +32,12 @@
 
         protected $id_col = null;
 
-        /**
-         * Constructor
-         *
-         * @param Statement $statement
-         */
+	    /**
+	     * Constructor
+	     *
+	     * @param mixed[] $row
+	     * @param Statement $statement
+	     */
         public function __construct($row, $statement)
         {
             foreach ($row as $key => $val) {
