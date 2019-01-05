@@ -28,6 +28,7 @@
           - unzip
           # For running tests.
           - php7.0-xml
+          - php-xdebug
 
     # Create necessary databases and database users.
     - name: Create database
