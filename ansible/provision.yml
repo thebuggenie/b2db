@@ -1,0 +1,57 @@
+---
+
+- hosts: all
+  become: yes
+  tasks:
+
+    # Package installation.
+    - name: Install packages for Ansible use
+      apt:
+        name:
+          - python-mysqldb
+
+    - name: Install database servers
+      apt:
+        name:
+          - mariadb-server
+        state: present
+
+    - name: Install PHP and B2DB requirements
+      apt:
+        name:
+          - php
+          - php-cli
+          - php-apcu
+          - php7.0-mbstring
+
+    # Create necessary databases and database users.
+    - name: Create database
+      mysql_db:
+        name: b2db
+        encoding: utf8
+        collation: utf8_general_ci
+        state: present
+
+    - name: Create database user
+      mysql_user:
+        name: b2db
+        host: localhost
+        password: b2db
+        priv: 'b2db.*:ALL'
+        state: present
+
+    - name: Download composer
+      get_url:
+        url: https://getcomposer.org/download/1.8.0/composer.phar
+        checksum: sha256:0901a84d56f6d6ae8f8b96b0c131d4f51ccaf169d491813d2bcedf2a6e4cefa6
+        dest: /usr/local/bin/composer
+        owner: vagrant
+        group: vagrant
+        mode: 0755
+
+    - name: Install development requirements via composer
+      become_user: vagrant
+      composer:
+        command: install
+        no_dev: no
+        working_dir: /vagrant
