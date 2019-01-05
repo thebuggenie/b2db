@@ -19,10 +19,15 @@
     - name: Install PHP and B2DB requirements
       apt:
         name:
+          # Core for library itself.
           - php
           - php-cli
           - php-apcu
           - php7.0-mbstring
+          # For Composer.
+          - unzip
+          # For running tests.
+          - php7.0-xml
 
     # Create necessary databases and database users.
     - name: Create database
@@ -40,6 +45,7 @@
         priv: 'b2db.*:ALL'
         state: present
 
+    # Composer dependency installation.
     - name: Download composer
       get_url:
         url: https://getcomposer.org/download/1.8.0/composer.phar
@@ -49,9 +55,17 @@
         group: vagrant
         mode: 0755
 
-    - name: Install development requirements via composer
+    - name: Install up-to-date development requirements via composer
       become_user: vagrant
       composer:
-        command: install
+        command: update
         no_dev: no
         working_dir: /vagrant
+
+    - name: Create convenience symlink for running the phpunit
+      file:
+        src: "/vagrant/vendor/bin/phpunit"
+        dest: "/usr/local/bin/phpunit"
+        owner: root
+        group: root
+        state: link
