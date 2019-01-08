@@ -108,6 +108,10 @@
 		}
 
 		/**
+         * Returns cache type.
+         *
+         * Use the `TYPE_` constants when performing comparisons.
+         *
 		 * @return int
 		 */
 		public function getType()
