@@ -51,4 +51,36 @@ class CacheTest extends TestCase
         $cache = new Cache(0, ['bogusoption' => true]);
 
     }
+
+    public function cacheTypes()
+    {
+        return [
+            [Cache::TYPE_DUMMY],
+            [Cache::TYPE_APC],
+            [Cache::TYPE_FILE]
+        ];
+    }
+
+    /**
+     * @dataProvider cacheTypes
+     */
+    public function test_reports_correct_description_for_valid_cache_type($cacheType)
+    {
+        $cache = new Cache($cacheType);
+
+        $description = $cache->getCacheTypeDescription();
+
+        $this->assertInternalType('string', $description);
+        $this->assertNotContains('Invalid', $description);
+    }
+
+    public function test_reports_correct_description_for_invalid_cache_type()
+    {
+        $cache = new Cache(100000);
+
+        $description = $cache->getCacheTypeDescription();
+
+        $this->assertInternalType('string', $description);
+        $this->assertContains('Invalid', $description);
+    }
 }

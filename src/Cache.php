@@ -89,6 +89,8 @@
 
 
 		/**
+         * Produces human-friendly description of cache type.
+         *
 		 * @return string
 		 */
 		public function getCacheTypeDescription()
