@@ -71,43 +71,43 @@
             return $this->column;
         }
 
-	    /**
-	     * @return string|null
-	     */
-	    public function getVariable()
-	    {
-		    return $this->variable;
-	    }
+        /**
+         * @return string|null
+         */
+        public function getVariable()
+        {
+            return $this->variable;
+        }
 
-	    public function getVariableString()
-	    {
-		    return (isset($this->variable) && $this->variable != '') ? ' @' . $this->variable . ':=' : '';
-	    }
+        public function getVariableString()
+        {
+            return (isset($this->variable) && $this->variable != '') ? ' @' . $this->variable . ':=' : '';
+        }
 
-	    /**
-	     * @return string|null
-	     */
-	    public function getAdditional()
-	    {
-		    return $this->additional;
-	    }
+        /**
+         * @return string|null
+         */
+        public function getAdditional()
+        {
+            return $this->additional;
+        }
 
-	    public function hasAdditional()
-	    {
-	    	return (bool) ($this->additional != '');
-	    }
+        public function hasAdditional()
+        {
+            return (bool) ($this->additional != '');
+        }
 
-	    /**
-	     * @return string|null
-	     */
-	    public function getSpecial()
-	    {
-		    return $this->special;
-	    }
+        /**
+         * @return string|null
+         */
+        public function getSpecial()
+        {
+            return $this->special;
+        }
 
-	    public function isSpecial()
-	    {
-	    	return (bool) ($this->special != '');
-	    }
+        public function isSpecial()
+        {
+            return (bool) ($this->special != '');
+        }
 
     }

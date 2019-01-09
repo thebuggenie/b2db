@@ -32,12 +32,12 @@
 
         protected $id_col = null;
 
-	    /**
-	     * Constructor
-	     *
-	     * @param mixed[] $row
-	     * @param Statement $statement
-	     */
+        /**
+         * Constructor
+         *
+         * @param mixed[] $row
+         * @param Statement $statement
+         */
         public function __construct($row, $statement)
         {
             foreach ($row as $key => $val) {
@@ -46,9 +46,9 @@
             $this->statement = $statement;
         }
 
-	    /**
-	     * @return Join[]
-	     */
+        /**
+         * @return Join[]
+         */
         public function getJoinedTables()
         {
             return $this->statement->getQuery()->getJoins();
@@ -73,7 +73,7 @@
         public function get($column, $foreign_key = null)
         {
             if ($this->statement == null) {
-            	throw new Exception('Statement did not execute, cannot return unknown value for column ' . $column);
+                throw new Exception('Statement did not execute, cannot return unknown value for column ' . $column);
             }
 
             $column = $this->getColumnName($column, $foreign_key);
@@ -122,7 +122,7 @@
         public function getID()
         {
             if ($this->id_col === null) {
-            	$this->id_col = $this->statement->getQuery()->getTable()->getIdColumn();
+                $this->id_col = $this->statement->getQuery()->getTable()->getIdColumn();
             }
 
             return $this->get($this->id_col);

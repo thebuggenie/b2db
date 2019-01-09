@@ -23,21 +23,21 @@
 
         protected $original_column;
 
-	    /**
-	     * @var Criteria[]
-	     */
+        /**
+         * @var Criteria[]
+         */
         protected $additional_criteria = [];
 
         protected $join_type;
 
-	    /**
-	     * @param Table $table
-	     * @param $left_column
-	     * @param $right_column
-	     * @param $original_column
-	     * @param $additional_criteria
-	     * @param string $join_type
-	     */
+        /**
+         * @param Table $table
+         * @param $left_column
+         * @param $right_column
+         * @param $original_column
+         * @param $additional_criteria
+         * @param string $join_type
+         */
         public function __construct(Table $table, $left_column, $right_column, $original_column, $additional_criteria = null, $join_type = self::LEFT)
         {
             $this->table = $table;
@@ -45,11 +45,11 @@
             $this->right_column = $right_column;
             $this->original_column = $original_column;
             if ($additional_criteria) {
-            	foreach ($additional_criteria as $additional_criterion) {
-		            $criteria = new Criteria();
-		            $criteria->where(...$additional_criterion);
-		            $this->additional_criteria[] = $criteria;
-	            }
+                foreach ($additional_criteria as $additional_criterion) {
+                    $criteria = new Criteria();
+                    $criteria->where(...$additional_criterion);
+                    $this->additional_criteria[] = $criteria;
+                }
             }
             $this->join_type = $join_type;
         }
@@ -126,12 +126,12 @@
             return $this->additional_criteria;
         }
 
-	    /**
-	     * @return bool
-	     */
+        /**
+         * @return bool
+         */
         public function hasAdditionalCriteria()
         {
-        	return (bool) count($this->additional_criteria);
+            return (bool) count($this->additional_criteria);
         }
 
         /**

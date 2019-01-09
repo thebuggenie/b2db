@@ -17,14 +17,14 @@
 
         public function getAction();
 
-	    public function isCount();
+        public function isCount();
 
-	    public function isSelect();
+        public function isSelect();
 
-	    public function isDelete();
+        public function isDelete();
 
-	    public function isInsert();
+        public function isInsert();
 
-	    public function isUpdate();
+        public function isUpdate();
 
     }

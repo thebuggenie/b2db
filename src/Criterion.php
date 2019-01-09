@@ -40,29 +40,29 @@
 
         protected $sql;
 
-	    /**
-	     * @var Criteria
-	     */
+        /**
+         * @var Criteria
+         */
         protected $criteria;
 
         public static function getOperators()
         {
-	        return [
-	        	self::EQUALS,
-		        self::GREATER_THAN,
-		        self::GREATER_THAN_EQUAL,
-		        self::ILIKE,
-		        self::IN,
-		        self::IS_NOT_NULL,
-		        self::IS_NULL,
-		        self::LESS_THAN,
-		        self::LESS_THAN_EQUAL,
-		        self::LIKE,
-		        self::NOT_EQUALS,
-		        self::NOT_ILIKE,
-		        self::NOT_IN,
-		        self::NOT_LIKE
-	        ];
+            return [
+                self::EQUALS,
+                self::GREATER_THAN,
+                self::GREATER_THAN_EQUAL,
+                self::ILIKE,
+                self::IN,
+                self::IS_NOT_NULL,
+                self::IS_NULL,
+                self::LESS_THAN,
+                self::LESS_THAN_EQUAL,
+                self::LIKE,
+                self::NOT_EQUALS,
+                self::NOT_ILIKE,
+                self::NOT_IN,
+                self::NOT_LIKE
+            ];
         }
 
         /**
@@ -101,30 +101,30 @@
             $this->validateOperator();
         }
 
-	    protected function validateOperator()
-	    {
-		    if (!in_array($this->operator, self::getOperators())) {
-			    throw new Exception("Invalid operator", $this->getOperator());
-		    }
-	    }
+        protected function validateOperator()
+        {
+            if (!in_array($this->operator, self::getOperators())) {
+                throw new Exception("Invalid operator", $this->getOperator());
+            }
+        }
 
-	    /**
-	     * @param Criteria $criteria
-	     */
-	    public function setCriteria(Criteria $criteria)
-	    {
-	    	$this->criteria = $criteria;
-	    }
+        /**
+         * @param Criteria $criteria
+         */
+        public function setCriteria(Criteria $criteria)
+        {
+            $this->criteria = $criteria;
+        }
 
-	    /**
-	     * @return Criteria
-	     */
-	    public function getCriteria(): Criteria
-	    {
-		    return $this->criteria;
-	    }
+        /**
+         * @return Criteria
+         */
+        public function getCriteria(): Criteria
+        {
+            return $this->criteria;
+        }
 
-	    /**
+        /**
          * @return string
          */
         public function getColumn()
@@ -223,56 +223,56 @@
 
         protected function getQuery()
         {
-        	return $this->criteria->getQuery();
+            return $this->criteria->getQuery();
         }
 
         public function isNullTypeOperator()
         {
-        	return in_array($this->operator, [self::IS_NOT_NULL, self::IS_NULL]);
+            return in_array($this->operator, [self::IS_NOT_NULL, self::IS_NULL]);
         }
 
         public function isInTypeOperator()
         {
-        	return in_array($this->operator, [self::IN, self::NOT_IN]);
+            return in_array($this->operator, [self::IN, self::NOT_IN]);
         }
 
-	    public function getSql($strip_table_name = false)
-	    {
-	    	if ($this->sql !== null) {
-	    		return $this->sql;
-		    }
+        public function getSql($strip_table_name = false)
+        {
+            if ($this->sql !== null) {
+                return $this->sql;
+            }
 
-		    $column = ($strip_table_name) ? Table::getColumnName($this->column) : $this->getQuery()->getSelectionColumn($this->column);
-		    $initial_sql = Query::quoteIdentifier($column);
+            $column = ($strip_table_name) ? Table::getColumnName($this->column) : $this->getQuery()->getSelectionColumn($this->column);
+            $initial_sql = Query::quoteIdentifier($column);
 
-		    if ($this->special) {
-			    $sql = "{$this->special}({$initial_sql})";
-		    } else {
-		    	$sql = $initial_sql;
-		    }
+            if ($this->special) {
+                $sql = "{$this->special}({$initial_sql})";
+            } else {
+                $sql = $initial_sql;
+            }
 
-		    if ($this->value === null && !$this->isNullTypeOperator()) {
-			    $this->operator = ($this->operator == self::EQUALS) ? self::IS_NULL : self::IS_NOT_NULL;
-		    } elseif (is_array($this->value) && $this->operator != self::NOT_IN) {
-			    $this->operator = self::IN;
-		    }
+            if ($this->value === null && !$this->isNullTypeOperator()) {
+                $this->operator = ($this->operator == self::EQUALS) ? self::IS_NULL : self::IS_NOT_NULL;
+            } elseif (is_array($this->value) && $this->operator != self::NOT_IN) {
+                $this->operator = self::IN;
+            }
 
-		    $sql .= " {$this->operator} ";
+            $sql .= " {$this->operator} ";
 
-		    if (!$this->isNullTypeOperator()) {
-			    if (is_array($this->value)) {
-				    $placeholders = [];
-				    for ($cc = 0; $cc < count($this->value); $cc += 1) {
-					    $placeholders[] = '?';
-				    }
-				    $sql .= '(' . implode(', ', $placeholders) . ')';
-			    } else {
-				    $sql .= $this->isInTypeOperator() ? '(?)' : '?';
-			    }
-		    }
+            if (!$this->isNullTypeOperator()) {
+                if (is_array($this->value)) {
+                    $placeholders = [];
+                    for ($cc = 0; $cc < count($this->value); $cc += 1) {
+                        $placeholders[] = '?';
+                    }
+                    $sql .= '(' . implode(', ', $placeholders) . ')';
+                } else {
+                    $sql .= $this->isInTypeOperator() ? '(?)' : '?';
+                }
+            }
 
-		    $this->sql = $sql;
-		    return $sql;
-	    }
+            $this->sql = $sql;
+            return $sql;
+        }
 
     }

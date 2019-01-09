@@ -22,8 +22,8 @@
         const DB_DISTINCT = 'DISTINCT';
         const DB_COUNT_DISTINCT = 'COUNT(DISTINCT';
 
-	    const MODE_AND = 'AND';
-	    const MODE_OR = 'OR';
+        const MODE_AND = 'AND';
+        const MODE_OR = 'OR';
 
         /**
          * @var Criteria[]
@@ -35,14 +35,14 @@
          */
         protected $joins = [];
 
-	    /**
-	     * @var QueryColumnSort[]
-	     */
+        /**
+         * @var QueryColumnSort[]
+         */
         protected $sort_orders = [];
 
-	    /**
-	     * @var QueryColumnSort[]
-	     */
+        /**
+         * @var QueryColumnSort[]
+         */
         protected $sort_groups = [];
 
         protected $selections = [];
@@ -78,23 +78,23 @@
 
         protected $mode;
 
-	    public static function quoteIdentifier($id)
-	    {
-		    $parts = [];
-		    foreach (explode('.', $id) as $part) {
-			    switch (Core::getDriver()) {
-				    case Core::DRIVER_MYSQL:
-					    $parts[] = "`$part`";
-					    break;
-				    default: # ANSI
-					    $parts[] = "\"$part\"";
-					    break;
-			    }
-		    }
-		    return implode('.', $parts);
-	    }
+        public static function quoteIdentifier($id)
+        {
+            $parts = [];
+            foreach (explode('.', $id) as $part) {
+                switch (Core::getDriver()) {
+                    case Core::DRIVER_MYSQL:
+                        $parts[] = "`$part`";
+                        break;
+                    default: # ANSI
+                        $parts[] = "\"$part\"";
+                        break;
+                }
+            }
+            return implode('.', $parts);
+        }
 
-	    /**
+        /**
          * Constructor
          *
          * @param Table $table
@@ -126,32 +126,32 @@
 
         public function getAction()
         {
-        	return $this->action;
+            return $this->action;
         }
 
         public function isCount()
         {
-        	return (bool) ($this->action == QueryInterface::ACTION_COUNT);
+            return (bool) ($this->action == QueryInterface::ACTION_COUNT);
         }
 
         public function isSelect()
         {
-        	return (bool) ($this->action == QueryInterface::ACTION_SELECT);
+            return (bool) ($this->action == QueryInterface::ACTION_SELECT);
         }
 
         public function isDelete()
         {
-        	return (bool) ($this->action == QueryInterface::ACTION_DELETE);
+            return (bool) ($this->action == QueryInterface::ACTION_DELETE);
         }
 
         public function isInsert()
         {
-        	return (bool) ($this->action == QueryInterface::ACTION_INSERT);
+            return (bool) ($this->action == QueryInterface::ACTION_INSERT);
         }
 
         public function isUpdate()
         {
-        	return (bool) ($this->action == QueryInterface::ACTION_UPDATE);
+            return (bool) ($this->action == QueryInterface::ACTION_UPDATE);
         }
 
         /**
@@ -161,57 +161,57 @@
          */
         public function getValues()
         {
-	        $values = $this->values;
+            $values = $this->values;
 
-	        foreach ($this->criteria as $criteria) {
-		        foreach ($criteria->getValues() as $value) {
-		            if (is_array($value)) {
-		                foreach ($value as $single_value) {
-		                    $values[] = $single_value;
+            foreach ($this->criteria as $criteria) {
+                foreach ($criteria->getValues() as $value) {
+                    if (is_array($value)) {
+                        foreach ($value as $single_value) {
+                            $values[] = $single_value;
                         }
                     } else {
                         $values[] = $value;
                     }
-		        }
-	        }
+                }
+            }
 
-	        return $values;
+            return $values;
         }
 
-	    /**
-	     * Get the quoted / converted value depending on database type
-	     *
-	     * @param mixed $value
-	     * @return int|mixed|string
-	     */
-	    public function getDatabaseValue($value)
-	    {
-		    if (is_bool($value)) {
-			    if (Core::getDriver() == Core::DRIVER_MYSQL) {
-				    return (int) $value;
-			    } elseif (Core::getDriver() == Core::DRIVER_POSTGRES) {
-				    return ($value) ? 'true' : 'false';
-			    }
-		    }
-		    return $value;
-	    }
-
-	    /**
-	     * Add a value to the value container
-	     *
-	     * @param mixed $value
-	     */
-	    public function addValue($value)
+        /**
+         * Get the quoted / converted value depending on database type
+         *
+         * @param mixed $value
+         * @return int|mixed|string
+         */
+        public function getDatabaseValue($value)
         {
-        	if (is_array($value)) {
-        		foreach ($value as $single_value) {
-        			$this->addValue($single_value);
-		        }
-	        } else {
+            if (is_bool($value)) {
+                if (Core::getDriver() == Core::DRIVER_MYSQL) {
+                    return (int) $value;
+                } elseif (Core::getDriver() == Core::DRIVER_POSTGRES) {
+                    return ($value) ? 'true' : 'false';
+                }
+            }
+            return $value;
+        }
+
+        /**
+         * Add a value to the value container
+         *
+         * @param mixed $value
+         */
+        public function addValue($value)
+        {
+            if (is_array($value)) {
+                foreach ($value as $single_value) {
+                    $this->addValue($single_value);
+                }
+            } else {
                 if ($value !== null) {
                     $this->values[] = $this->getDatabaseValue($value);
                 }
-	        }
+            }
         }
 
         /**
@@ -247,7 +247,7 @@
 
         public function isCustomSelection()
         {
-        	return $this->is_custom_selection;
+            return $this->is_custom_selection;
         }
 
         /**
@@ -260,12 +260,12 @@
          */
         public function update($column, $value): self
         {
-	        if (is_object($value)) {
-		        throw new Exception("Invalid value, can't be an object.");
-	        }
-	        $this->updates[] = compact('column', 'value');
+            if (is_object($value)) {
+                throw new Exception("Invalid value, can't be an object.");
+            }
+            $this->updates[] = compact('column', 'value');
 
-	        return $this;
+            return $this;
         }
 
         /**
@@ -294,54 +294,54 @@
             return $column;
         }
 
-	    /**
-	     * Add a "where" part to the criteria
-	     *
-	     * @param $column
-	     * @param string $value
-	     * @param string $operator
-	     * @param string $variable
-	     * @param string $additional
-	     * @param string $special
-	     *
-	     * @return Criteria
-	     */
+        /**
+         * Add a "where" part to the criteria
+         *
+         * @param $column
+         * @param string $value
+         * @param string $operator
+         * @param string $variable
+         * @param string $additional
+         * @param string $special
+         *
+         * @return Criteria
+         */
         public function and($column, $value = '', $operator = Criterion::EQUALS, $variable = null, $additional = null, $special = null): Criteria
         {
-	        if ($this->mode == query::MODE_OR) {
-		        throw new Exception('Cannot combine two selection types (AND/OR) in the same Query. Use sub-criteria instead');
-	        }
+            if ($this->mode == query::MODE_OR) {
+                throw new Exception('Cannot combine two selection types (AND/OR) in the same Query. Use sub-criteria instead');
+            }
 
-	        $criteria = $this->where($column, $value, $operator, $variable, $additional, $special);
+            $criteria = $this->where($column, $value, $operator, $variable, $additional, $special);
 
-	        $this->mode = query::MODE_AND;
+            $this->mode = query::MODE_AND;
 
-	        return $criteria;
+            return $criteria;
         }
 
-	    /**
-	     * Add a "where" part to the criteria
-	     *
-	     * @param $column
-	     * @param string $value
-	     * @param string $operator
-	     * @param string $variable
-	     * @param string $additional
-	     * @param string $special
-	     *
-	     * @return Criteria
-	     */
+        /**
+         * Add a "where" part to the criteria
+         *
+         * @param $column
+         * @param string $value
+         * @param string $operator
+         * @param string $variable
+         * @param string $additional
+         * @param string $special
+         *
+         * @return Criteria
+         */
         public function or($column, $value = '', $operator = Criterion::EQUALS, $variable = null, $additional = null, $special = null): Criteria
         {
-	        if ($this->mode == query::MODE_AND) {
-		        throw new Exception('Cannot combine two selection types (AND/OR) in the same Query. Use sub-criteria instead');
-	        }
+            if ($this->mode == query::MODE_AND) {
+                throw new Exception('Cannot combine two selection types (AND/OR) in the same Query. Use sub-criteria instead');
+            }
 
-	        $criteria = $this->where($column, $value, $operator, $variable, $additional, $special);
+            $criteria = $this->where($column, $value, $operator, $variable, $additional, $special);
 
-	        $this->mode = query::MODE_OR;
+            $this->mode = query::MODE_OR;
 
-	        return $criteria;
+            return $criteria;
         }
 
         /**
@@ -540,20 +540,20 @@
             return $this;
         }
 
-	    /**
-	     * @return QueryColumnSort[]
-	     */
+        /**
+         * @return QueryColumnSort[]
+         */
         public function getSortOrders()
         {
-        	return $this->sort_orders;
+            return $this->sort_orders;
         }
 
-	    public function hasSortOrders()
-	    {
-		    return (bool) count($this->sort_orders);
-	    }
+        public function hasSortOrders()
+        {
+            return (bool) count($this->sort_orders);
+        }
 
-	    /**
+        /**
          * Limit the query
          *
          * @param integer $limit The number to limit
@@ -569,12 +569,12 @@
 
         public function getLimit()
         {
-        	return $this->limit;
+            return $this->limit;
         }
 
         public function hasLimit()
         {
-        	return (bool) ($this->limit !== null);
+            return (bool) ($this->limit !== null);
         }
 
         /**
@@ -598,20 +598,20 @@
             return $this;
         }
 
-	    /**
-	     * @return QueryColumnSort[]
-	     */
+        /**
+         * @return QueryColumnSort[]
+         */
         public function getSortGroups()
         {
-        	return $this->sort_groups;
+            return $this->sort_groups;
         }
 
-	    /**
-	     * @return bool
-	     */
+        /**
+         * @return bool
+         */
         public function hasSortGroups()
         {
-        	return (bool) count($this->sort_groups);
+            return (bool) count($this->sort_groups);
         }
 
         /**
@@ -628,28 +628,28 @@
             return $this;
         }
 
-	    public function getOffset()
-	    {
-		    return $this->offset;
-	    }
+        public function getOffset()
+        {
+            return $this->offset;
+        }
 
-	    public function hasOffset()
-	    {
-		    return (bool) $this->offset;
-	    }
+        public function hasOffset()
+        {
+            return (bool) $this->offset;
+        }
 
-	    /**
-	     * Returns the SQL string for the current criteria
-	     *
-	     * @param bool $all
-	     * @return string
-	     */
+        /**
+         * Returns the SQL string for the current criteria
+         *
+         * @param bool $all
+         * @return string
+         */
         public function generateSelectSQL($all = false)
         {
             if ($this->sql === null) {
-            	$this->detectDistinct();
-	            $this->action = QueryInterface::ACTION_SELECT;
-            	$sql_generator = new SqlGenerator($this);
+                $this->detectDistinct();
+                $this->action = QueryInterface::ACTION_SELECT;
+                $sql_generator = new SqlGenerator($this);
 
                 $this->sql = $sql_generator->getSelectSQL($all);
             }
@@ -657,39 +657,39 @@
             return $this->sql;
         }
 
-	    /**
-	     * Returns the SQL string for the current criteria
-	     *
-	     * @param Update $update
-	     * @return string
-	     * @throws Exception
-	     */
+        /**
+         * Returns the SQL string for the current criteria
+         *
+         * @param Update $update
+         * @return string
+         * @throws Exception
+         */
         public function generateUpdateSQL(Update $update)
         {
             if ($this->sql === null) {
-            	$this->detectDistinct();
-	            $this->action = QueryInterface::ACTION_UPDATE;
-	            $sql_generator = new SqlGenerator($this);
+                $this->detectDistinct();
+                $this->action = QueryInterface::ACTION_UPDATE;
+                $sql_generator = new SqlGenerator($this);
 
                 $this->sql = $sql_generator->getUpdateSQL($update);
-	            $this->values = $sql_generator->getValues();
+                $this->values = $sql_generator->getValues();
             }
 
             return $this->sql;
         }
 
-	    /**
-	     * Returns the SQL string for the current criteria
-	     *
-	     * @param Insertion $insertion
-	     * @return string
-	     */
+        /**
+         * Returns the SQL string for the current criteria
+         *
+         * @param Insertion $insertion
+         * @return string
+         */
         public function generateInsertSQL(Insertion $insertion)
         {
             if ($this->sql === null) {
-            	$this->detectDistinct();
-	            $this->action = QueryInterface::ACTION_INSERT;
-	            $sql_generator = new SqlGenerator($this);
+                $this->detectDistinct();
+                $this->action = QueryInterface::ACTION_INSERT;
+                $sql_generator = new SqlGenerator($this);
 
                 $this->sql = $sql_generator->getInsertSQL($insertion);
                 $this->values = $sql_generator->getValues();
@@ -698,17 +698,17 @@
             return $this->sql;
         }
 
-	    /**
-	     * Returns the SQL string for the current criteria
-	     *
-	     * @return string
-	     */
+        /**
+         * Returns the SQL string for the current criteria
+         *
+         * @return string
+         */
         public function generateDeleteSQL()
         {
             if ($this->sql === null) {
-            	$this->detectDistinct();
-	            $this->action = QueryInterface::ACTION_DELETE;
-            	$sql_generator = new SqlGenerator($this);
+                $this->detectDistinct();
+                $this->action = QueryInterface::ACTION_DELETE;
+                $sql_generator = new SqlGenerator($this);
 
                 $this->sql = $sql_generator->getDeleteSQL();
             }
@@ -716,17 +716,17 @@
             return $this->sql;
         }
 
-	    /**
-	     * Returns the SQL string for the current criteria
-	     *
-	     * @return string
-	     */
+        /**
+         * Returns the SQL string for the current criteria
+         *
+         * @return string
+         */
         public function generateCountSQL()
         {
             if ($this->sql === null) {
-            	$this->detectDistinct();
-            	$this->action = QueryInterface::ACTION_COUNT;
-            	$sql_generator = new SqlGenerator($this);
+                $this->detectDistinct();
+                $this->action = QueryInterface::ACTION_COUNT;
+                $sql_generator = new SqlGenerator($this);
 
                 $this->sql = $sql_generator->getCountSQL();
             }
@@ -753,29 +753,29 @@
             }
         }
 
-	    /**
-	     * (Re-)generate selection columns based on criteria selection columns
-	     */
+        /**
+         * (Re-)generate selection columns based on criteria selection columns
+         */
         protected function detectDistinct()
         {
-        	foreach ($this->criteria as $criteria) {
-        		if ($criteria->isDistinct()) {
-        			$this->is_distinct = true;
-		        }
-	        }
+            foreach ($this->criteria as $criteria) {
+                if ($criteria->isDistinct()) {
+                    $this->is_distinct = true;
+                }
+            }
         }
 
-	    /**
-	     * @return Criteria[]
-	     */
+        /**
+         * @return Criteria[]
+         */
         public function getCriteria()
         {
-        	return $this->criteria;
+            return $this->criteria;
         }
 
         public function hasCriteria()
         {
-        	return (bool) count($this->criteria);
+            return (bool) count($this->criteria);
         }
 
         /**
@@ -788,20 +788,20 @@
 
         public function isDistinct()
         {
-        	return $this->is_distinct;
+            return $this->is_distinct;
         }
 
         public function getMode()
         {
-        	if (!$this->mode) {
-        		$this->mode = self::MODE_AND;
-	        }
-        	return $this->mode;
+            if (!$this->mode) {
+                $this->mode = self::MODE_AND;
+            }
+            return $this->mode;
         }
 
         public function getSql()
         {
-	        return $this->sql;
+            return $this->sql;
         }
 
     }

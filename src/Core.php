@@ -71,9 +71,9 @@
 
         protected static $debug_logging = null;
 
-	    /**
-	     * @var interfaces\Cache
-	     */
+        /**
+         * @var interfaces\Cache
+         */
         protected static $cache_object = null;
 
         protected static $cache_dir;
@@ -138,12 +138,12 @@
             return self::$alias_counter++;
         }
 
-	    /**
-	     * Initialize B2DB and load related B2DB classes
-	     *
-	     * @param array $configuration [optional] Configuration to load
-	     * @param \b2db\interfaces\Cache $cache_object
-	     */
+        /**
+         * Initialize B2DB and load related B2DB classes
+         *
+         * @param array $configuration [optional] Configuration to load
+         * @param \b2db\interfaces\Cache $cache_object
+         */
         public static function initialize($configuration = array(), $cache_object = null)
         {
             try {
@@ -169,11 +169,11 @@
                     self::setCacheEntities((bool) $configuration['caching']);
 
                 if ($cache_object !== null) {
-                	if (is_callable($cache_object)) {
-		                self::$cache_object = call_user_func($cache_object);
-	                } else {
-		                self::$cache_object = $cache_object;
-	                }
+                    if (is_callable($cache_object)) {
+                        self::$cache_object = call_user_func($cache_object);
+                    } else {
+                        self::$cache_object = $cache_object;
+                    }
                 }
 
                 if (!self::$cache_object) {
@@ -259,13 +259,13 @@
             return (!$trace) ? array('file' => 'unknown', 'line' => 'unknown', 'function' => 'unknown', 'class' => 'unknown', 'type' => 'unknown', 'args' => array()) : $trace;
         }
 
-	    /**
-	     * Register a new object population call (debug only)
-	     *
-	     * @param $num_classes
-	     * @param array $class_names
-	     * @param mixed $previous_time
-	     */
+        /**
+         * Register a new object population call (debug only)
+         *
+         * @param $num_classes
+         * @param array $class_names
+         * @param mixed $previous_time
+         */
         public static function objectPopulationHit($num_classes, $class_names, $previous_time)
         {
             if (!Core::isDebugMode() || !$num_classes)
@@ -612,15 +612,15 @@
                 if (!self::$db_connection instanceof PDO) {
                     throw new Exception('Could not connect to the database, but not caught by PDO');
                 }
-		switch (self::getDriver())
-		{
-			case self::DRIVER_MYSQL:
-			    self::getDBLink()->query('SET NAMES UTF8');
-			    break;
-			case self::DRIVER_POSTGRES:
-			    self::getDBlink()->query('set client_encoding to UTF8');
-			    break;
-		}
+        switch (self::getDriver())
+        {
+            case self::DRIVER_MYSQL:
+                self::getDBLink()->query('SET NAMES UTF8');
+                break;
+            case self::DRIVER_POSTGRES:
+                self::getDBlink()->query('set client_encoding to UTF8');
+                break;
+        }
             } catch (PDOException $e) {
                 throw new Exception("Could not connect to the database [" . $e->getMessage() . "], dsn: ".self::getDSN());
             } catch (Exception $e) {
@@ -933,10 +933,10 @@
             }
         }
 
-	    /**
-	     * @param Table $classname
-	     * @return array
-	     */
+        /**
+         * @param Table $classname
+         * @return array
+         */
         public static function getTableDetails($classname)
         {
             $table = $classname::getTable();
@@ -1012,10 +1012,10 @@
             return (is_array($column_details)) ? $column_details['property'] : null;
         }
 
-	    /**
-	     * @param $classname
-	     * @return Table
-	     */
+        /**
+         * @param $classname
+         * @return Table
+         */
         public static function getCachedB2DBTableClass($classname)
         {
             return self::getCachedEntityDetail($classname, 'table');
