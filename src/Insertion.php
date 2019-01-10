@@ -31,64 +31,64 @@
          */
         public function getColumns()
         {
-        	if ($this->columns === null) {
-        		$this->generateColumnsAndValues();
-	        }
+            if ($this->columns === null) {
+                $this->generateColumnsAndValues();
+            }
             return $this->columns;
         }
 
-	    /**
-	     * Get added values
-	     *
-	     * @return mixed[]
-	     */
-	    public function getValues()
-	    {
-		    if ($this->values === null) {
-			    $this->generateColumnsAndValues();
-		    }
-		    return $this->values;
-	    }
-
-	    /**
-	     * Get added variables
-	     *
-	     * @return mixed[]
-	     */
-	    public function getVariables()
-	    {
-		    if ($this->variables === null) {
-			    $this->generateColumnsAndValues();
-		    }
-		    return $this->variables;
-	    }
-
-	    public function hasVariable($column)
-	    {
-	    	return array_key_exists($column, $this->variables);
-	    }
-
-	    public function getVariable($column)
-	    {
-	    	return $this->variables[$column];
-	    }
-
-	    protected function generateColumnsAndValues()
+        /**
+         * Get added values
+         *
+         * @return mixed[]
+         */
+        public function getValues()
         {
-        	$this->columns = [];
-        	$this->values = [];
-        	$this->variables = [];
+            if ($this->values === null) {
+                $this->generateColumnsAndValues();
+            }
+            return $this->values;
+        }
 
-        	foreach ($this->criteria as $criterion) {
-        		$this->columns[$criterion->getColumn()] = $criterion->getColumn();
-        		$this->values[$criterion->getColumn()] = $criterion->getValue();
-        		$this->variables[$criterion->getColumn()] = $criterion->getVariable();
-	        }
+        /**
+         * Get added variables
+         *
+         * @return mixed[]
+         */
+        public function getVariables()
+        {
+            if ($this->variables === null) {
+                $this->generateColumnsAndValues();
+            }
+            return $this->variables;
+        }
+
+        public function hasVariable($column)
+        {
+            return array_key_exists($column, $this->variables);
+        }
+
+        public function getVariable($column)
+        {
+            return $this->variables[$column];
+        }
+
+        protected function generateColumnsAndValues()
+        {
+            $this->columns = [];
+            $this->values = [];
+            $this->variables = [];
+
+            foreach ($this->criteria as $criterion) {
+                $this->columns[$criterion->getColumn()] = $criterion->getColumn();
+                $this->values[$criterion->getColumn()] = $criterion->getValue();
+                $this->variables[$criterion->getColumn()] = $criterion->getVariable();
+            }
         }
 
         public function add($column, $value, $variable = null)
         {
-        	$this->criteria[$column] = new Criterion($column, $value, null, $variable);
+            $this->criteria[$column] = new Criterion($column, $value, null, $variable);
         }
 
     }

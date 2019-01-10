@@ -25,9 +25,9 @@
 
         protected static $column_names = [];
 
-	    /**
-	     * @var string
-	     */
+        /**
+         * @var string
+         */
         protected $b2db_name;
 
         protected $id_column;
@@ -148,7 +148,7 @@
         protected function addIndex($index_name, $columns, $index_type = null)
         {
             if (!is_array($columns)) {
-            	$columns = array($columns);
+                $columns = array($columns);
             }
 
             $this->indexes[$index_name] = ['columns' => $columns, 'type' => $index_type];
@@ -226,7 +226,7 @@
         {
             $qc = '`';
             switch (Core::getDriver()) {
-	            case Core::DRIVER_POSTGRES:
+                case Core::DRIVER_POSTGRES:
                     $qc = '"';
                     break;
             }
@@ -348,15 +348,15 @@
             return $this->populateFromResultset($resultset);
         }
 
-	    /**
-	     * Returns one row from the current table based on a given id
-	     *
-	     * @param integer $id
-	     * @param Query|null $query
-	     * @param mixed $join
-	     *
-	     * @return \b2db\Row|null
-	     */
+        /**
+         * Returns one row from the current table based on a given id
+         *
+         * @param integer $id
+         * @param Query|null $query
+         * @param mixed $join
+         *
+         * @return \b2db\Row|null
+         */
         public function rawSelectById($id, Query $query = null, $join = 'all')
         {
             if (!$id) {
@@ -364,23 +364,23 @@
             }
 
             if (!$query instanceof Query) {
-            	$query = new Query($this);
+                $query = new Query($this);
             }
             $query->where($this->id_column, $id);
             $query->setLimit(1);
             return $this->rawSelectOne($query, $join);
         }
 
-	    /**
-	     * Select an object by its unique id
-	     *
-	     * @param integer $id
-	     * @param Query $query (optional) Criteria with filters
-	     * @param mixed $join
-	     *
-	     * @return Saveable
-	     * @throws Exception
-	     */
+        /**
+         * Select an object by its unique id
+         *
+         * @param integer $id
+         * @param Query $query (optional) Criteria with filters
+         * @param mixed $join
+         *
+         * @return Saveable
+         * @throws Exception
+         */
         public function selectById($id, Query $query = null, $join = 'all')
         {
             if (!$this->hasCachedB2DBObject($id)) {
@@ -392,30 +392,30 @@
             return $object;
         }
 
-	    /**
-	     * Counts rows
-	     *
-	     * @param Query $query
-	     *
-	     * @return integer
-	     */
+        /**
+         * Counts rows
+         *
+         * @param Query $query
+         *
+         * @return integer
+         */
         public function count(Query $query)
         {
             $query->setTable($this);
             $query->generateCountSQL();
 
-	        $resultset = Statement::getPreparedStatement($query)->execute();
+            $resultset = Statement::getPreparedStatement($query)->execute();
             return $resultset->getCount();
         }
 
-	    /**
-	     * Selects rows based on given criteria
-	     *
-	     * @param Query $query
-	     *
-	     * @param string $join
-	     * @return Resultset
-	     */
+        /**
+         * Selects rows based on given criteria
+         *
+         * @param Query $query
+         *
+         * @param string $join
+         * @return Resultset
+         */
         public function rawSelect(Query $query, $join = 'all')
         {
             if (!$query instanceof Query) {
@@ -425,7 +425,7 @@
             $query->setupJoinTables($join);
             $query->generateSelectSQL();
 
-	        $resultset = Statement::getPreparedStatement($query)->execute();
+            $resultset = Statement::getPreparedStatement($query)->execute();
             return ($resultset->count()) ? $resultset : null;
         }
 
@@ -435,15 +435,15 @@
             return $this->populateFromResultset($resultset);
         }
 
-	    /**
-	     * Selects one row from the table based on the given criteria
-	     *
-	     * @param Query $query
-	     * @param mixed $join
-	     *
-	     * @return Row
-	     * @throws Exception
-	     */
+        /**
+         * Selects one row from the table based on the given criteria
+         *
+         * @param Query $query
+         * @param mixed $join
+         *
+         * @return Row
+         * @throws Exception
+         */
         public function rawSelectOne(Query $query, $join = 'all')
         {
             $query->setTable($this);
@@ -451,7 +451,7 @@
             $query->setLimit(1);
             $query->generateSelectSQL();
 
-	        $resultset = Statement::getPreparedStatement($query)->execute();
+            $resultset = Statement::getPreparedStatement($query)->execute();
             $resultset->next();
 
             return $resultset->getCurrentRow();
@@ -480,54 +480,54 @@
          */
         public function rawInsert(Insertion $insertion)
         {
-        	$query = new Query($this);
+            $query = new Query($this);
             $query->generateInsertSQL($insertion);
 
             return Statement::getPreparedStatement($query)->execute();
         }
 
-	    /**
-	     * Perform an SQL update
-	     *
-	     * @param Update $update
-	     *
-	     * @param Query|null $query
-	     * @return Resultset
-	     * @throws Exception
-	     */
+        /**
+         * Perform an SQL update
+         *
+         * @param Update $update
+         *
+         * @param Query|null $query
+         * @return Resultset
+         * @throws Exception
+         */
         public function rawUpdate(Update $update, Query $query = null)
         {
-        	if ($query === null) {
-	            $query = new Query($this);
-	        }
+            if ($query === null) {
+                $query = new Query($this);
+            }
             $query->generateUpdateSQL($update);
 
-	        $value = Statement::getPreparedStatement($query)->execute();
+            $value = Statement::getPreparedStatement($query)->execute();
             $this->clearB2DBCachedObjects();
 
             return $value;
         }
 
-	    /**
-	     * Perform an SQL update
-	     *
-	     * @param Update $update
-	     * @param integer $id
-	     *
-	     * @return Resultset|null
-	     */
+        /**
+         * Perform an SQL update
+         *
+         * @param Update $update
+         * @param integer $id
+         *
+         * @return Resultset|null
+         */
         public function rawUpdateById(Update $update, $id)
         {
             if (!$id) {
                 return null;
             }
 
-        	$query = new Query($this);
-        	$query->where($this->id_column, $id);
+            $query = new Query($this);
+            $query->where($this->id_column, $id);
             $query->setLimit(1);
             $query->generateUpdateSQL($update);
 
-	        $value = Statement::getPreparedStatement($query)->execute();
+            $value = Statement::getPreparedStatement($query)->execute();
             $this->deleteB2DBObjectFromCache($id);
 
             return $value;
@@ -545,7 +545,7 @@
             $query->setTable($this);
             $query->generateDeleteSQL();
 
-	        $value = Statement::getPreparedStatement($query)->execute();
+            $value = Statement::getPreparedStatement($query)->execute();
             $this->clearB2DBCachedObjects();
 
             return $value;
@@ -560,9 +560,9 @@
          */
         public function rawDeleteById($id)
         {
-        	if (!$id) {
-        		return null;
-	        }
+            if (!$id) {
+                return null;
+            }
 
             $query = new Query($this);
             $query->where($this->id_column, $id);
@@ -604,16 +604,16 @@
                         $index_column_sqls[] = $qc . $this->getRealColumnFieldName($column) . $qc;
                     }
                     switch (Core::getDriver()) {
-	                    case Core::DRIVER_POSTGRES:
+                        case Core::DRIVER_POSTGRES:
                             $sql = " CREATE INDEX " . Core::getTablePrefix() . $this->b2db_name . "_{$index_name} ON " . $this->getSqlTableName() . " (".join(', ', $index_column_sqls).')';
                             break;
-	                    case Core::DRIVER_MYSQL:
+                        case Core::DRIVER_MYSQL:
                             $sql = " ALTER TABLE " . $this->getSqlTableName() . " ADD INDEX " . Core::getTablePrefix() . $this->b2db_name . "_{$index_name} (".join(', ', $index_column_sqls).')';
                             break;
                     }
 
                     if (isset($sql)) {
-	                    $query = new RawQuery($sql);
+                        $query = new RawQuery($sql);
                         Statement::getPreparedStatement($query)->execute();
                     }
                 }
@@ -636,7 +636,7 @@
         {
             $sql = $this->generateDropSql();
             try {
-	            $query = new RawQuery($sql);
+                $query = new RawQuery($sql);
                 $statement = Statement::getPreparedStatement($query);
                 return $statement->execute();
             } catch (\Exception $e) {
@@ -653,7 +653,7 @@
          */
         public function getQuery($setup_join_tables = false)
         {
-        	$query = new Query($this, $setup_join_tables);
+            $query = new Query($this, $setup_join_tables);
             return $query;
         }
 
@@ -681,9 +681,9 @@
         {
             $id = $object->getB2DBID();
             if ($id) {
-            	$update = new Update();
+                $update = new Update();
             } else {
-	            $insertion = new Insertion();
+                $insertion = new Insertion();
             }
 
             $changed = false;
@@ -697,15 +697,15 @@
                 $value = $this->formatify($object->getB2DBSaveablePropertyValue(mb_strtolower($property)), $column['type']);
 
                 if ($id && !$object->isB2DBValueChanged($property)) {
-                	continue;
+                    continue;
                 }
 
                 if ($value instanceof Saveable) {
-                	$value = (int) $value->getB2DBID();
+                    $value = (int) $value->getB2DBID();
                 }
 
                 if (in_array($column['name'], $this->foreign_columns)) {
-                	$value = ($value) ? (int) $value : null;
+                    $value = ($value) ? (int) $value : null;
                 }
 
                 if ($id) {
@@ -829,10 +829,10 @@
             return $sql;
         }
 
-	    /**
-	     * @param $details
-	     * @return RawQuery
-	     */
+        /**
+         * @param $details
+         * @return RawQuery
+         */
         protected function getAddColumnQuery($details)
         {
             $qc = $this->getQC();
@@ -843,19 +843,19 @@
             return new RawQuery($sql);
         }
 
-	    /**
-	     * @param $details
-	     * @return RawQuery
-	     */
+        /**
+         * @param $details
+         * @return RawQuery
+         */
         protected function getAlterColumnQuery($details)
         {
             $sql = 'ALTER TABLE ' . $this->getSqlTableName();
             $qc = $this->getQC();
             switch (Core::getDriver()) {
-	            case Core::DRIVER_MYSQL:
+                case Core::DRIVER_MYSQL:
                     $sql .= " MODIFY $qc" . $this->getRealColumnFieldName($details['name']) . "$qc ";
                     break;
-	            case Core::DRIVER_POSTGRES:
+                case Core::DRIVER_POSTGRES:
                     $sql .= " ALTER COLUMN $qc" . $this->getRealColumnFieldName($details['name']) . "$qc TYPE ";
                     break;
             }
@@ -864,14 +864,14 @@
             return new RawQuery($sql);
         }
 
-	    /**
-	     * @param $details
-	     * @return RawQuery
-	     */
+        /**
+         * @param $details
+         * @return RawQuery
+         */
         protected function getAlterColumnDefaultQuery($details)
         {
             switch (Core::getDriver()) {
-	            case Core::DRIVER_POSTGRES:
+                case Core::DRIVER_POSTGRES:
                     $default_definition = $this->getColumnDefaultDefinitionSQL($details);
                     if ($default_definition) {
                         $sql = 'ALTER TABLE ' . $this->getSqlTableName();
@@ -886,10 +886,10 @@
             return null;
         }
 
-	    /**
-	     * @param $details
-	     * @return RawQuery
-	     */
+        /**
+         * @param $details
+         * @return RawQuery
+         */
         protected function getDropColumnQuery($details)
         {
             $sql = 'ALTER TABLE ' . $this->getSqlTableName();
@@ -918,7 +918,7 @@
             $altered_columns = Tools::array_diff_recursive($old_columns, $new_columns);
             $dropped_columns = \array_keys(array_diff_key($old_columns, $new_columns));
 
-	        /** @var RawQuery[] $queries */
+            /** @var RawQuery[] $queries */
             $queries = [];
             foreach ($added_columns as $details) {
                 $queries[] = $this->getAddColumnQuery($details);
@@ -960,15 +960,15 @@
             return $classname;
         }
 
-	    /**
-	     * @param Row|null $row
-	     * @param Saveable $classname
-	     * @param null $id_column
-	     * @param null $row_id
-	     * @param bool $from_resultset
-	     *
-	     * @return Saveable|null
-	     */
+        /**
+         * @param Row|null $row
+         * @param Saveable $classname
+         * @param null $id_column
+         * @param null $row_id
+         * @param bool $from_resultset
+         *
+         * @return Saveable|null
+         */
         protected function populateFromRow(Row $row = null, $classname = null, $id_column = null, $row_id = null, $from_resultset = false)
         {
             $item = null;
@@ -999,14 +999,14 @@
             return $item;
         }
 
-	    /**
-	     * @param Resultset|null $resultset
-	     * @param Saveable $classname
-	     * @param null $id_column
-	     * @param null $index_column
-	     *
-	     * @return Saveable[]
-	     */
+        /**
+         * @param Resultset|null $resultset
+         * @param Saveable $classname
+         * @param null $id_column
+         * @param null $index_column
+         *
+         * @return Saveable[]
+         */
         protected function populateFromResultset(Resultset $resultset = null, $classname = null, $id_column = null, $index_column = null)
         {
             $items = array();
@@ -1047,12 +1047,12 @@
             return $items;
         }
 
-	    /**
-	     * @param Saveable $class
-	     * @param $relation_details
-	     *
-	     * @return Query[]|string[]
-	     */
+        /**
+         * @param Saveable $class
+         * @param $relation_details
+         *
+         * @return Query[]|string[]
+         */
         public function generateForeignItemsQuery(Saveable $class, $relation_details)
         {
             $query = $this->getQuery();
@@ -1092,12 +1092,12 @@
             return array($query, $item_class, $item_column);
         }
 
-	    /**
-	     * @param Saveable $class
-	     * @param $relation_details
-	     *
-	     * @return Saveable[]
-	     */
+        /**
+         * @param Saveable $class
+         * @param $relation_details
+         *
+         * @return Saveable[]
+         */
         public function getForeignItems(Saveable $class, $relation_details)
         {
             list ($query, $item_class, $item_column) = $this->generateForeignItemsQuery($class, $relation_details);
@@ -1120,12 +1120,12 @@
             }
         }
 
-	    /**
-	     * @param Saveable $class
-	     * @param $relation_details
-	     *
-	     * @return int
-	     */
+        /**
+         * @param Saveable $class
+         * @param $relation_details
+         *
+         * @return int
+         */
         public function countForeignItems(Saveable $class, $relation_details)
         {
             list ($query,,) = $this->generateForeignItemsQuery($class, $relation_details);
@@ -1186,10 +1186,10 @@
             }
         }
 
-	    /**
-	     * @param $id
-	     * @return Saveable
-	     */
+        /**
+         * @param $id
+         * @return Saveable
+         */
         public function getB2DBCachedObject($id)
         {
             switch (Core::getCacheEntitiesStrategy()) {
@@ -1201,16 +1201,16 @@
             }
         }
 
-	    /**
-	     * @return string
-	     */
+        /**
+         * @return string
+         */
         public function getSelectFromSql()
         {
-        	$name = $this->getSqlTableName();
-	        $alias = $this->getB2DBAlias();
-	        $sql = $name . ' ' . Query::quoteIdentifier($alias);
+            $name = $this->getSqlTableName();
+            $alias = $this->getB2DBAlias();
+            $sql = $name . ' ' . Query::quoteIdentifier($alias);
 
-	        return $sql;
+            return $sql;
         }
 
     }

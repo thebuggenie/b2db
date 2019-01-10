@@ -13,7 +13,7 @@
 
         public function update($column, $value, $variable = null)
         {
-        	parent::add($column, $value, $variable);
+            parent::add($column, $value, $variable);
         }
 
     }
