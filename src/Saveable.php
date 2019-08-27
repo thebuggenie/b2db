@@ -68,21 +68,25 @@
                 $items = (isset($table)) ? $table::getTable()->getForeignItems($this, $relation_details) : null;
                 $value = ($items !== null) ? $items : array();
                 $this->$property = $value;
-            } elseif (is_numeric($this->$property) && $this->$property > 0) {
-                if ($relation_details && \class_exists($relation_details['class'])) {
-                    /** @var Saveable $classname */
-                    $classname = $relation_details['class'];
-                    try {
-                        if (!$use_cache) {
-                            $this->$property = new $classname($this->$property);
-                        } else {
-                            $this->$property = $classname::getB2DBCachedObjectIfAvailable($this->$property, $classname);
+            } elseif (is_numeric($this->$property)) {
+                if ($this->$property > 0) {
+                    if ($relation_details && \class_exists($relation_details['class'])) {
+                        /** @var Saveable $classname */
+                        $classname = $relation_details['class'];
+                        try {
+                            if (!$use_cache) {
+                                $this->$property = new $classname($this->$property);
+                            } else {
+                                $this->$property = $classname::getB2DBCachedObjectIfAvailable($this->$property, $classname);
+                            }
+                        } catch (\Exception $e) {
+                            $this->$property = null;
                         }
-                    } catch (\Exception $e) {
-                        $this->$property = null;
+                    } else {
+                        throw new \Exception("Unknown class definition for property {$property} in class \\" . get_class($this));
                     }
                 } else {
-                    throw new \Exception("Unknown class definition for property {$property} in class \\" . get_class($this));
+                    return null;
                 }
             }
             return $this->$property;
