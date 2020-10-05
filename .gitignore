@@ -1,1 +1,10 @@
 .idea/
+
+# Ignore development environment artefacts.
+*~
+.vagrant
+ansible/*.retry
+
+# Ignore Composer artefacts.
+composer.lock
+vendor/
