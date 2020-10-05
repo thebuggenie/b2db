@@ -57,11 +57,7 @@
                         $this->int_ptr = 0;
                     } elseif ($this->query->isCount()) {
                         $value = $statement->fetch();
-                        if ($value === false ) {
-                            $this->max_ptr = 0;
-                        } else {
-                            $this->max_ptr = $value['num_col'];
-                        }
+                        $this->max_ptr = $value['num_col'] ?? 0;
                     }
                 }
             } catch (\Exception $e) {
