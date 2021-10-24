@@ -79,7 +79,7 @@
             throw new Exception('The table "\\' . get_class($this) . '" has no corresponding entity class. You must override the initialize() method to set up the table details.');
         }
 
-        protected function setup($b2db_name, $id_column)
+        protected function setup(string $b2db_name, string $id_column)
         {
             $this->b2db_name = $b2db_name;
             $this->b2db_alias = $b2db_name . Core::addAlias();

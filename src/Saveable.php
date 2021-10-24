@@ -151,13 +151,13 @@
 
         protected function _postInitialize() {}
 
-        protected function _construct(Row $row, $foreign_key = null) {}
+        protected function _construct(Row $row, ?string $foreign_key = null) {}
 
         protected function _clone() {}
 
-        protected function _preSave($is_new) {}
+        protected function _preSave(bool $is_new) {}
 
-        protected function _postSave($is_new) {}
+        protected function _postSave(bool $is_new) {}
 
         protected function _preDelete() {}
 
